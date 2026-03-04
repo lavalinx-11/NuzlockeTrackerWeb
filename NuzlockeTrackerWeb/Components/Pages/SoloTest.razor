@@ -1,0 +1,619 @@
+﻿@page "/SoloTest"
+@rendermode InteractiveServer
+@using NuzlockeTrackerWeb.Components.GameData
+
+@* DEBUG NAVIGATION *@
+<div class="d-flex justify-content-center gap-2 mb-4 bg-dark p-2 rounded shadow-sm sticky-top" style="z-index: 1000;">
+    <button class="btn btn-sm btn-outline-secondary" @onclick='() => view = "menu"'>Main Menu</button>
+    <button class="btn btn-sm btn-outline-success" @onclick='() => view = "stats"'>🏆 Hall of Fame</button>
+    <button class="btn btn-sm btn-outline-info" @onclick="QuickStartDraft">DEBUG: Jump to Draft</button>
+    <button class="btn btn-sm btn-outline-warning" @onclick='() => view = "setup"'>Room Setup</button>
+</div>
+
+<div class="container py-4">
+    @if (view == "menu") {
+    <div class="text-center mt-5">
+        <h1 class="display-4 fw-bold text-primary">ABA NUZLOCKE</h1>
+        <div class="mt-4 d-grid gap-2 d-sm-block">
+            <button class="btn btn-primary btn-lg px-5 shadow me-sm-2" @onclick="InitializeSetup">Create Room</button>
+            <button class="btn btn-outline-success btn-lg px-5 shadow" @onclick='() => view = "stats"'>View Stats</button>
+        </div>
+    </div>
+    }
+    else if (view == "stats") {
+    <div class="text-center mb-4">
+        <h2 class="text-success fw-bold">SESSION STATISTICS</h2>
+        <p class="text-white-50">Individual form and historical match data</p>
+    </div>
+
+    <div class="row g-4">
+        @* RANKINGS SECTION *@
+        <div class="col-md-8">
+            <div class="card bg-dark border-success text-light shadow h-100">
+                <div class="card-header border-success bg-black d-flex justify-content-between align-items-center p-0">
+                    <div class="btn-group w-100">
+                        <button class="btn btn-square @(statsTab == "players" ? "btn-success" : "btn-dark")" @onclick='() => statsTab = "players"'>
+                            👤 Player Rankings
+                        </button>
+                        <button class="btn btn-square @(statsTab == "teams" ? "btn-success" : "btn-dark")" @onclick='() => statsTab = "teams"'>
+                            👥 Team Records
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (statsTab == "players") {
+                    <table class="table table-dark table-hover mb-0 text-center reveal-card">
+                        <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>W - L</th>
+                            <th>Streak</th>
+                            <th>Ratio</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var stat in GetPlayerStats()) {
+                        <tr>
+                            <td class="fw-bold">@stat.Name</td>
+                            <td><span class="text-success">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
+                            <td>
+                                @if (stat.CurrentStreak >= 2) {
+                                <span class="badge bg-danger text-warning border border-warning rivalry-pulse px-2">🔥 @stat.CurrentStreak</span>
+                                } else {
+                                <span class="text-muted">@stat.CurrentStreak</span>
+                                }
+                            </td>
+                            <td class="fw-bold text-info">@stat.Ratio%</td>
+                        </tr>
+                        }
+                        </tbody>
+                    </table>
+                    } else {
+                    <table class="table table-dark table-hover mb-0 text-center reveal-card">
+                        <thead>
+                        <tr>
+                            <th>Squad Composition</th>
+                            <th>Wins</th>
+                            <th>Losses</th>
+                            <th>Win Rate</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var team in GetTeamStats()) {
+                        <tr>
+                            <td class="fw-bold text-warning">@team.TeamComposition</td>
+                            <td class="text-success">@team.Wins</td>
+                            <td class="text-danger">@team.Losses</td>
+                            <td class="text-info">@team.Ratio%</td>
+                        </tr>
+                        }
+                        </tbody>
+                    </table>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* SIDE BIAS *@
+        <div class="col-md-4">
+            @* SQUAD RECORDS QUICK VIEW *@
+            <div class="card bg-dark border-warning text-light shadow">
+                <div class="card-header border-warning bg-black text-warning"><h5>Top 3 Squads</h5></div>
+                <div class="card-body p-0">
+                    <table class="table table-dark table-sm mb-0">
+                        <tbody>
+                        @foreach (var team in GetTeamStats().Take(3)) {
+                        <tr>
+                            <td class="ps-3 py-2 small">@team.TeamComposition</td>
+                            <td class="text-end pe-3 text-warning py-2">@team.Wins-@team.Losses</td>
+                        </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @* MATCH HISTORY LOG *@
+        <div class="col-12">
+            <div class="card bg-dark border-secondary text-light shadow">
+                <div class="card-header border-secondary bg-black d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Full Match History</h5>
+                    <small class="text-muted">Click a match for details & ban list</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @for (int i = MatchHistory.Count - 1; i >= 0; i--) {
+                        var match = MatchHistory[i];
+                        var matchIndex = i;
+                        <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3" @onclick="() => OpenMatchDetail(matchIndex)">
+                            <div class="row align-items-center">
+                                <div class="col-4 @(match.WinningTeamSide == 1 ? "text-success fw-bold" : "text-white-50")">
+                                    @string.Join(" & ", match.Team1Names)
+                                    @if(match.WinningTeamSide == 1) { <span class="ms-1">🏆</span> }
+                                </div>
+                                <div class="col-4 text-center">
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <span class="h4 mb-0 @(match.WinningTeamSide == 1 ? "text-success" : "")">@match.Team1Rounds</span>
+                                        <span class="badge bg-secondary">RDS</span>
+                                        <span class="h4 mb-0 @(match.WinningTeamSide == 2 ? "text-danger" : "")">@match.Team2Rounds</span>
+                                    </div>
+                                </div>
+                                <div class="col-4 text-end @(match.WinningTeamSide == 2 ? "text-success fw-bold" : "text-white-50")">
+                                    @if(match.WinningTeamSide == 2) { <span class="me-1">🏆</span> }
+                                    @string.Join(" & ", match.Team2Names)
+                                </div>
+                            </div>
+                        </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="text-center mt-4">
+        <button class="btn btn-secondary" @onclick='() => view = "menu"'>Back to Menu</button>
+    </div>
+    }
+    else if (view == "matchDetail" && selectedMatch != null) {
+    <div class="reveal-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <button class="btn btn-outline-secondary" @onclick='() => view = "stats"'>← Back to Stats</button>
+            <h2 class="text-warning fw-bold mb-0">MATCH DATA</h2>
+            <div class="text-muted">ID: #@(MatchHistory.IndexOf(selectedMatch) + 1)</div>
+        </div>
+
+        <div class="card bg-dark border-secondary shadow mb-4">
+            <div class="card-header bg-black py-4 border-secondary text-center">
+                <div class="row align-items-center">
+                    <div class="col-5">
+                        <h3 class="@(selectedMatch.WinningTeamSide == 1 ? "text-success fw-bold" : "text-light")">
+                            @string.Join(" & ", selectedMatch.Team1Names)
+                        </h3>
+                    </div>
+                    <div class="col-2">
+                        <div class="display-3 fw-bold text-white">@selectedMatch.Team1Rounds - @selectedMatch.Team2Rounds</div>
+                        <span class="badge bg-primary px-3">FINAL ROUNDS</span>
+                    </div>
+                    <div class="col-5">
+                        <h3 class="@(selectedMatch.WinningTeamSide == 2 ? "text-success fw-bold" : "text-light")">
+                            @string.Join(" & ", selectedMatch.Team2Names)
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body bg-black p-4">
+                <div class="row">
+                    <div class="col-md-6 border-end border-secondary">
+                        <div class="text-info x-small fw-bold mb-3">TEAM 1 ROSTER</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach(var c in selectedMatch.Team1Roster) {
+                            <span class="badge border border-info text-info py-2 px-3">@c</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="text-danger x-small fw-bold mb-3">TEAM 2 ROSTER</div>
+                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                            @foreach(var c in selectedMatch.Team2Roster) {
+                            <span class="badge border border-danger text-danger py-2 px-3">@c</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-dark border-danger shadow">
+            <div class="card-header bg-black text-danger fw-bold">BANNED IN THIS GAME</div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    @foreach(var ban in selectedMatch.BanList.OrderBy(x => x)) {
+                    <span class="badge bg-outline-danger border border-danger opacity-75">@ban</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+    else if (view == "setup") {
+    <h3 class="text-light mb-4">Room Setup</h3>
+    <div class="card bg-dark text-light p-4 shadow border-secondary">
+        <div class="mb-4">
+            <label class="form-label">Players per Team:</label>
+            <select @onchange="OnPlayerCountChange" class="form-select w-25 bg-secondary text-white border-0" disabled="@isSpinning">
+                <option value="2">2 (2v2)</option>
+                <option value="3">3 (3v3)</option>
+            </select>
+        </div>
+
+        <h5 class="mb-3">Enter Participant Names:</h5>
+        <div class="row g-3">
+            @foreach (var p in UnassignedPlayers) {
+            <div class="col-md-4">
+                <input @bind="p.Name" class="form-control bg-dark text-white border-secondary" placeholder="Player Name" disabled="@isSpinning" />
+            </div>
+            }
+        </div>
+
+        <div class="mt-5 text-center">
+            @if (isSpinning) {
+            <div class="p-4 border border-warning rounded bg-black reveal-card">
+                <h2 class="text-warning slot-machine">@randomNameDisplay</h2>
+                <p class="text-white-50">SHUFFLING TEAMS...</p>
+            </div>
+            } else {
+            <button class="btn btn-warning btn-lg fw-bold px-5 shadow" @onclick="WheelSpinTeams">
+                ⚡ SPIN WHEEL & START DRAFT
+            </button>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage)) {
+            <div class="text-danger mt-3">@errorMessage</div>
+            }
+        </div>
+    </div>
+    }
+    else if (view == "draft") {
+    <div class="alert alert-info text-center shadow-sm border-0 mb-3 py-3">
+        <h4 class="mb-0">Current Turn: <span class="fw-bold text-primary">@PickingOrder[currentPickerIndex].Name</span></h4>
+        <small class="text-uppercase opacity-75">Picking for Team @PickingOrder[currentPickerIndex].TeamNumber</small>
+        <div class="mt-2 text-warning fw-bold small">⚠️ Rule: You can only have 2 of one series on your team.</div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage)) {
+    <div class="alert alert-danger text-center py-2 mb-3 shadow-sm border border-danger">
+        <strong>@errorMessage</strong>
+    </div>
+    }
+
+    <div class="text-center mb-3">
+        <button class="btn btn-sm @(showBans ? "btn-danger" : "btn-outline-danger") shadow-sm" @onclick="() => showBans = !showBans">
+            @(showBans ? "Hide" : "View") Banned Characters (@CurrentBans.Count)
+        </button>
+
+        @if (showBans) {
+        <div class="card card-body bg-dark border-danger p-2 mt-2 reveal-card">
+            <div class="d-flex flex-wrap gap-1 justify-content-center mb-2">
+                @foreach (var ban in CurrentBans.OrderBy(x => x)) {
+                <span class="badge border border-danger text-danger" style="font-size: 0.75rem;">@ban</span>
+                }
+            </div>
+            <button class="btn btn-sm btn-outline-warning w-25 mx-auto" @onclick="GenerateBans">🔄 REROLL</button>
+        </div>
+        }
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <h2 class="text-info border-bottom border-info pb-2 text-center">Team 1</h2>
+            @foreach(var p in Team1) {
+            <div class="card bg-dark mb-2 @(PickingOrder[currentPickerIndex] == p ? "border-info border-3 shadow-glow-info" : "border-secondary")">
+                <div class="card-body p-2">
+                    <strong class="text-light">@p.Name</strong>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        @foreach(var character in p.Roster) { <span class="badge bg-info text-dark">@character.Name</span> }
+                        @for(int i = p.Roster.Count; i < 5; i++) { <span class="badge border border-secondary text-secondary opacity-50">Empty</span> }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        <div class="col-md-6 text-end">
+            <h2 class="text-danger border-bottom border-danger pb-2 text-center">Team 2</h2>
+            @foreach(var p in Team2) {
+            <div class="card bg-dark mb-2 @(PickingOrder[currentPickerIndex] == p ? "border-danger border-3 shadow-glow-danger" : "border-secondary")">
+                <div class="card-body p-2">
+                    <strong class="text-light">@p.Name</strong>
+                    <div class="d-flex flex-wrap gap-1 justify-content-end mt-1">
+                        @foreach(var character in p.Roster) { <span class="badge bg-danger">@character.Name</span> }
+                        @for(int i = p.Roster.Count; i < 5; i++) { <span class="badge border border-secondary text-secondary opacity-50">Empty</span> }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4 p-4 bg-dark rounded border border-secondary shadow">
+        <div class="row g-2 mb-3">
+            <div class="col-md-4">
+                <select class="form-select bg-secondary text-white border-0" @bind="selectedSeries">
+                    <option value="">All Series</option>
+                    @foreach (var series in CharacterData.MasterList.Select(c => c.Series).Distinct().OrderBy(s => s)) {
+                    <option value="@series">@series</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-8">
+                <input @bind="searchQuery" @bind:event="oninput" class="form-control bg-dark text-white border-secondary" placeholder="Search by name or series..." />
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 justify-content-center overflow-auto scrollbar-hidden" style="max-height: 450px;">
+            @foreach (var charItem in GetFilteredCharacters()) {
+            bool isBanned = CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
+            bool alreadyTaken = PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
+
+            <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled border-dashed" : (alreadyTaken ? "btn-secondary disabled opacity-50" : "btn-outline-primary"))"
+                    style="min-width: 140px; position: relative;"
+                    @onclick="() => SelectCharacter(charItem)"
+                    disabled="@(alreadyTaken || isBanned)">
+                <div class="fw-bold @(isBanned ? "text-decoration-line-through text-danger" : "")">@charItem.Name</div>
+                <small class="@(isBanned ? "text-danger" : "text-white-50")">@(isBanned ? "BANNED" : charItem.Series)</small>
+            </button>
+            }
+        </div>
+    </div>
+    }
+    else if (view == "battle") {
+    @if (!string.IsNullOrEmpty(rivalryText)) {
+    <div class="text-center mb-3">
+        <div class="badge bg-danger p-2 px-4 shadow-sm border border-warning rivalry-pulse">
+            <span class="text-warning fw-bold">🔥 RIVALRY MATCH:</span> @rivalryText
+        </div>
+    </div>
+    }
+
+    <div class="text-center mb-4">
+        <h2 class="display-5 fw-bold text-warning">MATCH TRACKER</h2>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            @foreach(var p in Team1) {
+            <div class="card bg-dark mb-3 @(p.IsEliminated ? "opacity-50 grayscale shadow-none" : "border-info shadow-sm")">
+                <div class="card-body">
+                    <h5 class="text-light mb-3">@p.Name</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach(var character in p.Roster) {
+                        <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-info")"
+                                @onclick="() => { character.IsLost = true; CheckVictory(); }"
+                                disabled="@character.IsLost">
+                            @character.Name @(character.IsLost ? "💀" : "")
+                        </button>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+        <div class="col-md-6 text-end">
+            @foreach(var p in Team2) {
+            <div class="card bg-dark mb-3 @(p.IsEliminated ? "opacity-50 grayscale shadow-none" : "border-danger shadow-sm")">
+                <div class="card-body">
+                    <h5 class="text-light mb-3">@p.Name</h5>
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        @foreach(var character in p.Roster) {
+                        <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-danger")"
+                                @onclick="() => { character.IsLost = true; CheckVictory(); }"
+                                disabled="@character.IsLost">
+                            @(character.IsLost ? "💀" : "") @character.Name
+                        </button>
+                        }
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    @if (winningTeamNumber != 0) {
+    <div class="modal-backdrop fade show" style="background-color: rgba(0,0,0,0.85); z-index: 1050;"></div>
+    <div class="position-fixed top-50 start-50 translate-middle w-100 text-center" style="z-index: 1060;">
+        <div class="reveal-card">
+            <h1 class="display-1 animate-bounce">🏆</h1>
+            <h1 class="display-2 fw-bold text-warning" style="text-shadow: 0 0 20px rgba(255,193,7,0.5);">TEAM @winningTeamNumber WINS</h1>
+            <div class="mt-4">
+                <button class="btn btn-lg btn-success px-5 fw-bold shadow-lg" @onclick="RecordMatchResult" disabled="@historyRecorded">RECORD RESULT</button>
+                @if (historyRecorded) {
+                <button class="btn btn-lg btn-warning px-5 fw-bold shadow-lg ms-3" @onclick='ResetGame'>MAIN MENU</button>
+                }
+            </div>
+        </div>
+    </div>
+    }
+    }
+</div>
+
+@code {
+// --- CLASSES ---
+public class MatchResult {
+public string Team1Key { get; set; } = "";
+public string Team2Key { get; set; } = "";
+public List<string> Team1Names { get; set; } = new();
+public List<string> Team2Names { get; set; } = new();
+public List<string> Team1Roster { get; set; } = new();
+public List<string> Team2Roster { get; set; } = new();
+public List<string> BanList { get; set; } = new();
+public int Team1Rounds { get; set; }
+public int Team2Rounds { get; set; }
+public int WinningTeamSide { get; set; }
+}
+
+public class PlayerStat {
+public string Name { get; set; } = "";
+public int Wins { get; set; }
+public int Losses { get; set; }
+public int CurrentStreak { get; set; }
+public List<bool> RecentForm { get; set; } = new();
+public int Ratio => (Wins + Losses) == 0 ? 0 : (int)((double)Wins / (Wins + Losses) * 100);
+}
+
+public class TeamStat {
+public string TeamComposition { get; set; } = "";
+public int Wins { get; set; }
+public int Losses { get; set; }
+public int Ratio => (Wins + Losses) == 0 ? 0 : (int)((double)Wins / (Wins + Losses) * 100);
+}
+
+// --- STATE VARIABLES ---
+private string view = "menu", statsTab = "players", errorMessage = "", searchQuery = "", selectedSeries = "", randomNameDisplay = "", rivalryText = "";
+private int playersPerTeam = 2, charIdCounter = 1, winningTeamNumber = 0, currentPickerIndex = 0;
+private bool isSpinning = false, showBans = false, historyRecorded = false;
+private MatchResult? selectedMatch;
+
+private List<MatchResult> MatchHistory = new();
+private List<Player> UnassignedPlayers = new(), Team1 = new(), Team2 = new(), PickingOrder = new();
+private List<string> CurrentBans = new();
+
+private readonly List<string> StaticBans = new() { "Denji", "Achilles", "Pucci", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Meruem", "Gohan" };
+private readonly List<string> RotatingPool = new() {
+"Soulja Boy", "Kazuma", "Misaka", "Usopp", "Crocodile", "Enel", "Jiren", "Yoshikage Kira", "Hol Horse", "Ishtar", "Morel","Madara", "PTS Luffy", "TS Luffy", "TS Zoro", "TS Sanji", "Kizaru", "Akainu", "Arlong", "Namek Goku", "Android Vegeta", "Piccolo", "Krillin", "Buu Goku", "Trunks", "Caulifla", "Majin Vegeta", "Vegeto", "Frieza", "PuiPui", "Cell", "Super Goku", "Super Vegeta", "Gogeta", "Bardock", "Broly", "Goku Black", "PTS Naruto", "PTS Sasuke", "Kakashi", "Zabuza", "Gaara", "TS Naruto", "Itachi", "Pain", "Guy", "PTS Ichigo", "Rukia", "Grimmjow", "Starrk", "Toshiro", "Ulquiorra", "TS Ichigo", "Yoruichi", "Kenpachi", "Aizen", "Yhwach", "Yamamoto", "Rikka", "Afro", "Chika", "Ryuko", "Guts", "Asta", "Hiei", "Yusuke", "Accelerator", "Akira", "Ragna", "Alucard", "Edward", "Jotaro", "Giorno", "Kira", "Ghiacchio", "Risotto", "Kars", "Dio", "Doppio", "Gon", "Kurapika", "Uvogin", "Sukuna", "Yuji", "Choso", "Nanami", "Jogo", "All Might", "Endeavor", "Saber", "Gilgamesh", "Kiritsugu", "Lancer", "Mash", "Illya", "Gray", "Natsu", "Aki", "Power", "Rengoku", "Kokushibo", "Tanjiro", "Sinon", "Asuna", "Saitama", "Raiden", "Snake", "Ricardo", "Roland"
+};
+
+// --- LOGIC METHODS ---
+private void RecordMatchResult() {
+if (historyRecorded) return;
+
+// ROUND SCORING: 2 characters = 1 round.
+// If T1 eliminates 10 chars, they get 5 rounds.
+int team1RoundsCalculated = Team2.Sum(p => p.Roster.Count(c => c.IsLost)) / 2;
+int team2RoundsCalculated = Team1.Sum(p => p.Roster.Count(c => c.IsLost)) / 2;
+
+MatchHistory.Add(new MatchResult {
+Team1Key = GetTeamKey(Team1),
+Team2Key = GetTeamKey(Team2),
+Team1Names = Team1.Select(p => p.Name).ToList(),
+Team2Names = Team2.Select(p => p.Name).ToList(),
+Team1Roster = Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+Team2Roster = Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+BanList = new List<string>(CurrentBans),
+Team1Rounds = Math.Min(team1RoundsCalculated, 5),
+Team2Rounds = Math.Min(team2RoundsCalculated, 5),
+WinningTeamSide = winningTeamNumber
+});
+historyRecorded = true;
+}
+
+private void OpenMatchDetail(int index) {
+selectedMatch = MatchHistory[index];
+view = "matchDetail";
+}
+
+private List<PlayerStat> GetPlayerStats() {
+var stats = new Dictionary<string, PlayerStat>();
+foreach (var m in MatchHistory) {
+var winners = m.WinningTeamSide == 1 ? m.Team1Names : m.Team2Names;
+var losers = m.WinningTeamSide == 1 ? m.Team2Names : m.Team1Names;
+foreach (var n in winners) {
+if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
+stats[n].Wins++; stats[n].CurrentStreak++; stats[n].RecentForm.Add(true);
+}
+foreach (var n in losers) {
+if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
+stats[n].Losses++; stats[n].CurrentStreak = 0; stats[n].RecentForm.Add(false);
+}
+}
+foreach (var s in stats.Values) if (s.RecentForm.Count > 5) s.RecentForm = s.RecentForm.TakeLast(5).ToList();
+return stats.Values.OrderByDescending(s => s.Wins).ToList();
+}
+
+private List<TeamStat> GetTeamStats() {
+var teamStats = new Dictionary<string, TeamStat>();
+foreach (var match in MatchHistory) {
+if (!teamStats.ContainsKey(match.Team1Key)) teamStats[match.Team1Key] = new TeamStat { TeamComposition = match.Team1Key };
+if (!teamStats.ContainsKey(match.Team2Key)) teamStats[match.Team2Key] = new TeamStat { TeamComposition = match.Team2Key };
+if (match.WinningTeamSide == 1) { teamStats[match.Team1Key].Wins++; teamStats[match.Team2Key].Losses++; }
+else { teamStats[match.Team2Key].Wins++; teamStats[match.Team1Key].Losses++; }
+}
+return teamStats.Values.OrderByDescending(s => s.Wins).ToList();
+}
+
+private void CheckForRivalry() {
+rivalryText = "";
+string t1K = GetTeamKey(Team1), t2K = GetTeamKey(Team2);
+var headToHead = MatchHistory.Where(m => (m.Team1Key == t1K && m.Team2Key == t2K) || (m.Team1Key == t2K && m.Team2Key == t1K)).ToList();
+if (headToHead.Any()) {
+int t1W = headToHead.Count(m => (m.Team1Key == t1K && m.WinningTeamSide == 1) || (m.Team2Key == t1K && m.WinningTeamSide == 2));
+rivalryText = $"{t1W} - {headToHead.Count - t1W}";
+}
+}
+
+private string GetTeamKey(List<Player> team) => string.Join(", ", team.Select(p => p.Name).OrderBy(n => n));
+
+private void GenerateBans() {
+var rng = new Random();
+CurrentBans = new List<string>(StaticBans);
+int banCount = (int)(RotatingPool.Count * 0.28);
+CurrentBans.AddRange(RotatingPool.OrderBy(x => rng.Next()).Take(banCount));
+}
+
+protected override void OnInitialized() => UpdateUnassignedList();
+
+private void InitializeSetup() { GenerateBans(); view = "setup"; }
+
+private void OnPlayerCountChange(ChangeEventArgs e) {
+if (int.TryParse(e.Value?.ToString(), out int val)) { playersPerTeam = val; UpdateUnassignedList(); }
+}
+
+private void UpdateUnassignedList() {
+UnassignedPlayers.Clear();
+for (int i = 0; i < (playersPerTeam * 2); i++) UnassignedPlayers.Add(new Player());
+}
+
+private async Task WheelSpinTeams() {
+errorMessage = "";
+var valid = UnassignedPlayers.Where(p => !string.IsNullOrWhiteSpace(p.Name)).ToList();
+if (valid.Count < (playersPerTeam * 2)) { errorMessage = "Fill all names."; return; }
+isSpinning = true;
+var rng = new Random();
+for (int i = 0; i < 20; i++) { randomNameDisplay = valid[rng.Next(valid.Count)].Name; StateHasChanged(); await Task.Delay(100); }
+var shuffled = valid.OrderBy(x => rng.Next()).ToList();
+Team1 = shuffled.Take(playersPerTeam).ToList();
+Team2 = shuffled.Skip(playersPerTeam).ToList();
+PickingOrder = new List<Player>();
+for(int i=0; i<playersPerTeam; i++) { PickingOrder.Add(Team1[i]); PickingOrder.Add(Team2[i]); }
+foreach(var p in PickingOrder) { p.Roster.Clear(); p.TeamNumber = Team1.Contains(p) ? 1 : 2; }
+isSpinning = false; view = "draft"; currentPickerIndex = 0;
+}
+
+private void SelectCharacter(Character chosen) {
+var p = PickingOrder[currentPickerIndex];
+if (p.GetSeriesCount(chosen.Series) >= 2) { errorMessage = "Series cap (2) reached!"; return; }
+p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++));
+searchQuery = ""; errorMessage = "";
+currentPickerIndex = (currentPickerIndex + 1) % PickingOrder.Count;
+if (PickingOrder.All(x => x.Roster.Count == 5)) { CheckForRivalry(); view = "battle"; }
+}
+
+private void CheckVictory() {
+if (Team1.All(p => p.IsEliminated)) winningTeamNumber = 2;
+else if (Team2.All(p => p.IsEliminated)) winningTeamNumber = 1;
+}
+
+private void ResetGame() { view = "menu"; winningTeamNumber = 0; historyRecorded = false; charIdCounter = 1; selectedMatch = null; statsTab = "players"; }
+
+private void QuickStartDraft() {
+GenerateBans();
+Team1 = new List<Player>{ new Player{Name="Player 1", TeamNumber=1} };
+Team2 = new List<Player>{ new Player{Name="Player 2", TeamNumber=2} };
+PickingOrder = new List<Player>{Team1[0], Team2[0]};
+view = "draft";
+}
+
+private IEnumerable<Character> GetFilteredCharacters() {
+var q = CharacterData.MasterList.AsEnumerable();
+if (!string.IsNullOrEmpty(selectedSeries)) q = q.Where(c => c.Series == selectedSeries);
+if (!string.IsNullOrWhiteSpace(searchQuery))
+q = q.Where(c => c.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || c.Series.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+return q.Take(40);
+}
+}
+
+<style>
+    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin: 0 1px; }
+    .grayscale { filter: grayscale(1); transition: 0.3s; }
+    .rivalry-pulse { animation: pulse-red 2s infinite; }
+    @@keyframes pulse-red { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } }
+    .reveal-card { animation: fadeInScale 0.3s ease-out; }
+    @@keyframes fadeInScale { 0% { opacity: 0; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); } }
+    .animate-bounce { animation: bounce 1.5s infinite; }
+    @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+    .slot-machine { animation: slot-flip 0.1s infinite; }
+    @@keyframes slot-flip { 0% { opacity: 1; } 50% { opacity: 0.7; transform: translateY(-2px); } 100% { opacity: 1; } }
+    .scrollbar-hidden::-webkit-scrollbar { display: none; }
+    .shadow-glow-info { box-shadow: 0 0 15px rgba(13, 202, 240, 0.3); }
+    .shadow-glow-danger { box-shadow: 0 0 15px rgba(220, 53, 69, 0.3); }
+    .x-small { font-size: 0.7rem; letter-spacing: 1px; }
+    .btn-square { border-radius: 0; border: none; padding: 12px; font-weight: bold; transition: 0.2s; }
+</style>

@@ -7,6 +7,7 @@ public class Player
     public List<Character> Roster { get; set; } = new();
     public bool IsEliminated => Roster.Count > 0 && Roster.All(c => c.IsLost);
     public bool IsRosterFull => Roster.Count >= 5;
+    public string ClaimedBySessionId { get; set; } = "";
 
     // Fixed: Finds the character by name and marks them as lost
     public void LoseCharacter(string charName)
