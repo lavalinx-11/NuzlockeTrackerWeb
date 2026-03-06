@@ -424,15 +424,37 @@
     };
 
     private async Task CreateNewRoom() {
-        s = SessionService.Create();
-        s.HostId = browserId;
-        s.OnChange += Refresh;
-    
-        // Load Global History from DB
-        using var db = await DbFactory.CreateDbContextAsync();
-        s.MatchHistory = await db.Matches.OrderByDescending(m => m.Id).Take(20).ToListAsync();
-    
-        UpdateUnassignedList();
+        try {
+            errorMessage = "Attempting to connect...";
+            StateHasChanged();
+            // 1. Create the session first so the UI can at least load
+            s = SessionService.Create();
+            s.HostId = browserId;
+            s.OnChange += Refresh;
+
+            // 2. Try to load history, but don't CRASH if it fails
+            try {
+                using var db = await DbFactory.CreateDbContextAsync();
+                s.MatchHistory = await db.Matches
+                    .OrderByDescending(m => m.Id)
+                    .Take(20)
+                    .ToListAsync();
+            }
+            catch (Exception dbEx) {
+                // This sends the error to your Railway Logs instead of crashing the user's screen
+                Console.WriteLine($"⚠️ Database History Load Failed: {dbEx.Message}");
+                errorMessage = "Note: Global History unavailable (DB Connection Error).";
+                
+            }
+
+            UpdateUnassignedList();
+            s.Notify();
+        }
+        catch (Exception ex) {
+            errorMessage = "Critical Error: " + ex.Message;
+            errorMessage = $"CRASH: {ex.Message}";
+            s.Notify();
+        }
     }
 
     private async Task JoinRoom() {
