@@ -357,11 +357,11 @@
                         <h5 class="text-light mb-3">@p.Name</h5>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach(var character in p.Roster) {
-                            <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-info")"
-                                    @onclick="() => { character.IsLost = true; CheckVictory(); s.Notify(); }"
-                                    disabled="@character.IsLost">
-                                @character.Name @(character.IsLost ? "💀" : "")
-                            </button>
+                                <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-info")"
+                                        @onclick="async () => { character.IsLost = true; await CheckVictory(); s.Notify(); }"
+                                        disabled="@character.IsLost">
+                                    @character.Name @(character.IsLost ? "💀" : "")
+                                </button>
                             }
                         </div>
                     </div>
@@ -390,19 +390,28 @@
         </div>
 
         @if (s.WinningTeamNumber != 0) {
-        <div class="modal-backdrop fade show" style="background-color: rgba(0,0,0,0.85); z-index: 1050;"></div>
-        <div class="position-fixed top-50 start-50 translate-middle w-100 text-center" style="z-index: 1060;">
-            <div class="reveal-card">
-                <h1 class="display-1 animate-bounce">🏆</h1>
-                <h1 class="display-2 fw-bold text-warning" style="text-shadow: 0 0 20px rgba(255,193,7,0.5);">TEAM @s.WinningTeamNumber WINS</h1>
-                <div class="mt-4">
-                    <button class="btn btn-lg btn-success px-5 fw-bold shadow-lg" @onclick="RecordMatchResult" disabled="@s.HistoryRecorded">RECORD RESULT</button>
-                    @if (s.HistoryRecorded) {
-                    <button class="btn btn-lg btn-warning px-5 fw-bold shadow-lg ms-3" @onclick='ResetGame'>MAIN MENU</button>
-                    }
+            <div class="modal-backdrop fade show" style="background-color: rgba(0,0,0,0.85); z-index: 1050;"></div>
+            <div class="position-fixed top-50 start-50 translate-middle w-100 text-center" style="z-index: 1060;">
+                <div class="reveal-card">
+                    <h1 class="display-1 animate-bounce">🏆</h1>
+                    <h1 class="display-2 fw-bold text-warning" style="text-shadow: 0 0 20px rgba(255,193,7,0.5);">
+                        TEAM @s.WinningTeamNumber WINS
+                    </h1>
+            
+                    <div class="mt-4">
+                        @if (!s.HistoryRecorded) {
+                            <div class="spinner-border text-success mb-2" role="status"></div>
+                            <div class="text-success fw-bold animate-pulse">AUTOSAVING MATCH DATA...</div>
+                        } else {
+                            <button class="btn btn-lg btn-warning px-5 fw-bold shadow-lg ms-3" @onclick='ResetGame'>
+                                RETURN TO MAIN MENU
+                            </button>
+                            <div class="text-muted mt-2 small">✅ Match history updated.</div>
+                        }
+                    </div>
+                    @if(!string.IsNullOrEmpty(errorMessage)) { <div class="text-danger mt-3">@errorMessage</div> }
                 </div>
             </div>
-        </div>
         }
         }
     </div>
@@ -576,58 +585,82 @@
         s.Notify();
     }
     private async Task RecordMatchResult() {
-        // 1. Safety Checks
-        if (s == null || !IsHost || s.HistoryRecorded) return;
+    // 1. Safety Guard: Only the Host can write to the DB, 
+    // and we only record the match once.
+    if (s == null || !IsHost || s.HistoryRecorded) return;
 
-        try {
-            // 2. Map the current session state to the MatchResult model
-            var result = new MatchResult {
-                Team1Key = GetTeamKey(s.Team1),
-                Team2Key = GetTeamKey(s.Team2),
+    try {
+        // 2. Prepare the Match Data
+        var result = new MatchResult {
+            // Using a unique key based on player names to track team performance
+            Team1Key = GetTeamKey(s.Team1),
+            Team2Key = GetTeamKey(s.Team2),
             
-                // Extracting names for history display
-                Team1Names = s.Team1.Select(p => p.Name).ToList(),
-                Team2Names = s.Team2.Select(p => p.Name).ToList(),
+            // Convert current player objects to simple string lists for storage
+            Team1Names = s.Team1.Select(p => p.Name ?? "Unknown").ToList(),
+            Team2Names = s.Team2.Select(p => p.Name ?? "Unknown").ToList(),
             
-                // Extracting all character names into a flat list for the DB
-                Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+            // Flatten the rosters into character name lists
+            Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+            Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
             
-                // Recording the bans used this game
-                BanList = new List<string>(s.CurrentBans),
+            // Snapshot of the bans active during this specific match
+            BanList = new List<string>(s.CurrentBans),
             
-                // Logic: Your score is how many characters the OTHER team lost
-                Team1Rounds = s.Team2.Sum(p => p.Roster.Count(c => c.IsLost)),
-                Team2Rounds = s.Team1.Sum(p => p.Roster.Count(c => c.IsLost)),
+            // Calculate scores based on the other team's casualties
+            Team1Rounds = s.Team2.Sum(p => p.Roster.Count(c => c.IsLost)),
+            Team2Rounds = s.Team1.Sum(p => p.Roster.Count(c => c.IsLost)),
             
-                WinningTeamSide = s.WinningTeamNumber
-            };
+            WinningTeamSide = s.WinningTeamNumber,
+            MatchDate = DateTime.UtcNow // Postgres prefers UTC for 'timestamp with time zone'
+        };
 
-            // 3. Database Operation using the Factory
-            // This 'using' block ensures the connection is closed immediately after saving
-            using (var db = await DbFactory.CreateDbContextAsync()) 
-            {
-                db.Matches.Add(result);
-                await db.SaveChangesAsync();
-            }
-
-            // 4. Update the local UI state
-            s.MatchHistory.Add(result);
-            s.HistoryRecorded = true;
-            errorMessage = ""; // Clear any previous errors
-            s.Notify();
+        // 3. Save to Postgres
+        using (var db = await DbFactory.CreateDbContextAsync()) 
+        {
+            db.Matches.Add(result);
+            await db.SaveChangesAsync();
+            
+            // After saving, we pull the latest 20 matches to keep the UI perfectly synced
+            s.MatchHistory = await db.Matches
+                .OrderByDescending(m => m.Id)
+                .Take(20)
+                .ToListAsync();
         }
-        catch (Exception ex) {
-            // If the DB fails (e.g., Railway connection blip), show the error to the Host
-            errorMessage = $"Database Error: {ex.Message}";
-            s.Notify();
-        }
+
+        // 4. Update Global Session State
+        s.HistoryRecorded = true;
+        errorMessage = ""; 
+        
+        // Notify all connected clients that the result is locked in
+        s.Notify(); 
     }
+    catch (Exception ex) {
+        // Log the error for the Host and console
+        errorMessage = $"Autosave Failed: {ex.Message}";
+        Console.WriteLine($"❌ DATABASE SAVE ERROR: {ex.Message}");
+        s.Notify();
+    }
+}
 
-    private void CheckVictory() {
-    if (s == null) return;
-    if (s.Team1.All(p => p.Roster.All(c => c.IsLost))) s.WinningTeamNumber = 2;
-    else if (s.Team2.All(p => p.Roster.All(c => c.IsLost))) s.WinningTeamNumber = 1;
+    private async Task CheckVictory() {
+        if (s == null) return;
+
+        // 1. Detect if the game ended
+        if (s.Team1.All(p => p.Roster.All(c => c.IsLost))) 
+        {
+            s.WinningTeamNumber = 2;
+        }
+        else if (s.Team2.All(p => p.Roster.All(c => c.IsLost))) 
+        {
+            s.WinningTeamNumber = 1;
+        }
+
+        // 2. If someone won, and I am the host, and we haven't recorded it yet...
+        if (s.WinningTeamNumber != 0 && IsHost && !s.HistoryRecorded) 
+        {
+            await RecordMatchResult();
+        }
     }
 
     private void ResetGame() { if(s!=null) { s.View = "menu"; s.WinningTeamNumber = 0; s.HistoryRecorded = false; s.Notify(); } }
