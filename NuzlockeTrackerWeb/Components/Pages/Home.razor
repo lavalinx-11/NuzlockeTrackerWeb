@@ -440,14 +440,16 @@
             s = ex; 
             s.OnChange += Refresh; 
             errorMessage = ""; 
-        
-            // Load Global History from DB
+    
             using var db = await DbFactory.CreateDbContextAsync();
             s.MatchHistory = await db.Matches.OrderByDescending(m => m.Id).Take(20).ToListAsync();
+        
+            // This ensures the joining player sees the current slots
+            s.Notify(); 
         }
         else { errorMessage = "Invalid Room Code."; }
     }
-    private async void Refresh() => await InvokeAsync(StateHasChanged);
+    private void Refresh() =>  InvokeAsync(StateHasChanged);
     private void OnPlayerCountChange(ChangeEventArgs e) { if (int.TryParse(e.Value?.ToString(), out int val)) { playersPerTeam = val; UpdateUnassignedList(); } }
 
     private void UpdateUnassignedList() {
