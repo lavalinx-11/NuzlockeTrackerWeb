@@ -81,7 +81,7 @@ using (var scope = app.Services.CreateScope())
         if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
         {
             Console.WriteLine("🔄 Attempting to apply migrations...");
-            db.Database.Migrate();
+            db.Database.EnsureCreated();
             Console.WriteLine("✅ Database migrations applied successfully.");
         }
     }
