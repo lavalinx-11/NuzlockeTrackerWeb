@@ -209,27 +209,30 @@
             <h5 class="mb-3">Claim a Slot & Enter Name:</h5>
             <div class="row g-3">
                 @foreach (var p in s.UnassignedPlayers) {
-                    bool isLocked = !string.IsNullOrEmpty(p.ClaimedBySessionId) && p.ClaimedBySessionId != browserId;
+                    bool isLocked = p.IsLocked || (!string.IsNullOrEmpty(p.ClaimedBySessionId) && p.ClaimedBySessionId != browserId);
                     bool isClaimedByMe = p.ClaimedBySessionId == browserId;
                     bool iAlreadyHaveAClaim = s.UnassignedPlayers.Any(other => other.ClaimedBySessionId == browserId);
 
                     <div class="col-md-4">
                         <div class="input-group">
-                            <input value="@p.Name"
-                                   @oninput='(e) => { if(!isLocked) { p.Name = e.Value?.ToString(); s.Notify(); } }'
-                                   class="form-control bg-dark text-white border-secondary @(isClaimedByMe ? "border-info shadow-glow-info" : "")"
-                                   placeholder="Enter Name..."
-                                   disabled="@(isLocked || (!isClaimedByMe && iAlreadyHaveAClaim))" />
-
-                            <button class="btn btn-sm @(isClaimedByMe ? "btn-info" : "btn-outline-info")"
-                                    disabled="@(!isClaimedByMe && iAlreadyHaveAClaim || isLocked)"
-                                    @onclick='() => { 
-                                                if(isClaimedByMe) { p.ClaimedBySessionId = ""; myIdentity = ""; } 
-                                                else { p.ClaimedBySessionId = browserId; myIdentity = p.Name; } 
-                                                s.Notify(); 
-                                            }'>
-                                @(isClaimedByMe ? "RELEASE" : (isLocked ? "LOCKED" : "CLAIM"))
-                            </button>
+                            @if (isClaimedByMe && !p.IsLocked) {
+                                <input @bind="myTemporaryName" 
+                                       class="form-control bg-dark text-white border-info shadow-glow-info" 
+                                       placeholder="Your Name..." />
+                                <button class="btn btn-success" @onclick="() => LockMyName(p)">LOCK</button>
+                            }
+                            else {
+                                <input value="@(string.IsNullOrEmpty(p.Name) ? "Empty Slot" : p.Name)" 
+                                       class="form-control bg-dark text-white border-secondary" 
+                                       disabled />
+                
+                                @if (!iAlreadyHaveAClaim && !isLocked) {
+                                    <button class="btn btn-outline-info" @onclick="() => ClaimSlot(p)">CLAIM</button>
+                                }
+                                else if (isClaimedByMe && p.IsLocked) {
+                                    <button class="btn btn-outline-warning" @onclick="() => UnlockName(p)">EDIT</button>
+                                }
+                            }
                         </div>
                     </div>
                 }
@@ -417,14 +420,14 @@
     </div>
 
     @code {
-    @* --- SECTION: STATE --- *@
+   
     private GameSession? s;
     private string joinCode = "", myIdentity = "", statsTab = "players", errorMessage = "", searchQuery = "", selectedSeries = "", randomNameDisplay = "";
     private string browserId = Guid.NewGuid().ToString();
     private int playersPerTeam = 2, charIdCounter = 1;
     private bool isSpinning = false, showBans = false;
     private MatchResult? selectedMatch;
-
+    private string myTemporaryName = "";
     private bool IsHost => s?.HostId == browserId;
 
     private readonly List<string> StaticBans = new() { "Denji", "Achilles", "Pucci", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Meruem", "Gohan" };
@@ -531,7 +534,10 @@
             errorMessage = "Everyone must CLAIM a slot before starting!";
             return;
         }
-
+        if (s.UnassignedPlayers.Any(p => !p.IsLocked)) { 
+            errorMessage = "Everyone must LOCK their names before starting!"; 
+            return; 
+        }
         isSpinning = true; 
         errorMessage = "";
         var rng = new Random();
@@ -585,66 +591,46 @@
         s.Notify();
     }
     private async Task RecordMatchResult() {
-    // 1. Safety Guard: Only the Host can write to the DB, 
-    // and we only record the match once.
-    if (s == null || !IsHost || s.HistoryRecorded) return;
+        if (s == null || !IsHost || s.HistoryRecorded) return;
 
-    try {
-        // 2. Prepare the Match Data
-        var result = new MatchResult {
-            // Using a unique key based on player names to track team performance
-            Team1Key = GetTeamKey(s.Team1),
-            Team2Key = GetTeamKey(s.Team2),
-            
-            // Convert current player objects to simple string lists for storage
-            Team1Names = s.Team1.Select(p => p.Name ?? "Unknown").ToList(),
-            Team2Names = s.Team2.Select(p => p.Name ?? "Unknown").ToList(),
-            
-            // Flatten the rosters into character name lists
-            Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-            Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-            
-            // Snapshot of the bans active during this specific match
-            BanList = new List<string>(s.CurrentBans),
-            
-            // Calculate scores based on the other team's casualties
-            Team1Rounds = s.Team2.Sum(p => p.Roster.Count(c => c.IsLost)),
-            Team2Rounds = s.Team1.Sum(p => p.Roster.Count(c => c.IsLost)),
-            
-            WinningTeamSide = s.WinningTeamNumber,
-            MatchDate = DateTime.UtcNow // Postgres prefers UTC for 'timestamp with time zone'
-        };
+        try {
+            var result = new MatchResult {
+                Team1Key = GetTeamKey(s.Team1),
+                Team2Key = GetTeamKey(s.Team2),
+                Team1Names = s.Team1.Select(p => p.Name).ToList(),
+                Team2Names = s.Team2.Select(p => p.Name).ToList(),
+                Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+                Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+                BanList = new List<string>(s.CurrentBans),
 
-        // 3. Save to Postgres
-        using (var db = await DbFactory.CreateDbContextAsync()) 
-        {
-            db.Matches.Add(result);
-            await db.SaveChangesAsync();
+                // FIXED LOGIC: Count how many PLAYERS were fully defeated
+                // Team 1 gets a point for every player on Team 2 who is "Lost"
+                Team1Rounds = s.Team2.Count(p => p.Roster.All(c => c.IsLost)),
+                Team2Rounds = s.Team1.Count(p => p.Roster.All(c => c.IsLost)),
+
+                WinningTeamSide = s.WinningTeamNumber,
+                MatchDate = DateTime.UtcNow
+            };
+
+            using (var db = await DbFactory.CreateDbContextAsync()) 
+            {
+                db.Matches.Add(result);
+                await db.SaveChangesAsync();
             
-            // After saving, we pull the latest 20 matches to keep the UI perfectly synced
-            s.MatchHistory = await db.Matches
-                .OrderByDescending(m => m.Id)
-                .Take(20)
-                .ToListAsync();
+                // Refresh history so the UI updates immediately
+                s.MatchHistory = await db.Matches.OrderByDescending(m => m.Id).Take(20).ToListAsync();
+            }
+
+            s.HistoryRecorded = true;
+            errorMessage = "";
+            s.Notify();
         }
-
-        // 4. Update Global Session State
-        s.HistoryRecorded = true;
-        errorMessage = ""; 
-        
-        // Notify all connected clients that the result is locked in
-        s.Notify(); 
-        
+        catch (Exception ex) {
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            errorMessage = $"Autosave Failed: {innerMsg}";
+            s.Notify();
+        }
     }
-    catch (Exception ex) {
-        // This looks deep into the error to find the actual Postgres complaint
-        var realError = ex.InnerException?.Message ?? ex.Message;
-        errorMessage = $"Autosave Failed: {realError}";
-        Console.WriteLine($"❌ DATABASE SAVE ERROR: {realError}");
-        if (ex.InnerException != null) Console.WriteLine($"❌ INNER: {ex.InnerException.Message}");
-        s.Notify();
-    }
-}
 
     private async Task CheckVictory() {
         if (s == null) return;
@@ -730,6 +716,28 @@
     private void InitializeSetup() { if (s != null) { GenerateBans(); s.View = "setup"; UpdateUnassignedList(); s.Notify(); } }
     private void QuickStartDraft() { if(s == null) CreateNewRoom(); s.Team1 = new List<Player>{ new Player{Name="P1"} }; s.Team2 = new List<Player>{ new Player{Name="P2"} }; s.PickingOrder = new List<Player>{s.Team1[0], s.Team2[0]}; myIdentity = "P1"; s.View = "draft"; s.Notify(); }
     public void Dispose() { if (s != null) s.OnChange -= Refresh; }
+    
+    
+    private void ClaimSlot(Player p) {
+        p.ClaimedBySessionId = browserId;
+        myTemporaryName = ""; // Clear buffer for new entry
+        s.Notify();
+    }
+
+    private void LockMyName(Player p) {
+        if (string.IsNullOrWhiteSpace(myTemporaryName)) return;
+    
+        p.Name = myTemporaryName;
+        p.IsLocked = true;
+        myIdentity = p.Name; // Sync global identity
+        s.Notify();
+    }
+
+    private void UnlockName(Player p) {
+        p.IsLocked = false;
+        myTemporaryName = p.Name; // Bring the name back to the buffer
+        s.Notify();
+    }
     }
 
     <style>

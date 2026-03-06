@@ -4,6 +4,7 @@ public class Player
 {
     public string Name { get; set; } = "";
     public int TeamNumber { get; set; } 
+    public bool IsLocked { get; set; } = false; // Add this
     public List<Character> Roster { get; set; } = new();
     public bool IsEliminated => Roster.Count > 0 && Roster.All(c => c.IsLost);
     public bool IsRosterFull => Roster.Count >= 5;
