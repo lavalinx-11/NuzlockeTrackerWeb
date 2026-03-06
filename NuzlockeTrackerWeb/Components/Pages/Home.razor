@@ -471,7 +471,23 @@
         }
         else { errorMessage = "Invalid Room Code."; }
     }
-    private void Refresh() =>  InvokeAsync(StateHasChanged);
+    private void Refresh() 
+    {
+        InvokeAsync(() => {
+            // SYNC IDENTITY: Check if I am one of the players in the picking order
+            if (s != null)
+            {
+                var me = s.PickingOrder.FirstOrDefault(p => p.ClaimedBySessionId == browserId) 
+                         ?? s.UnassignedPlayers.FirstOrDefault(p => p.ClaimedBySessionId == browserId);
+                
+                if (me != null) 
+                {
+                    myIdentity = me.Name;
+                }
+            }
+            StateHasChanged();
+        });
+    }
     private void OnPlayerCountChange(ChangeEventArgs e) { if (int.TryParse(e.Value?.ToString(), out int val)) { playersPerTeam = val; UpdateUnassignedList(); } }
 
     private void UpdateUnassignedList() {
@@ -480,11 +496,24 @@
     for (int i = 0; i < (playersPerTeam * 2); i++) { s.UnassignedPlayers.Add(new Player()); }
     s.Notify();
     }
-
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && s != null)
+        {
+            // If I refresh the page, find which player belongs to my browser session
+            var myClaimedPlayer = s.UnassignedPlayers.Concat(s.PickingOrder)
+                .FirstOrDefault(x => x.ClaimedBySessionId == browserId);
+            if (myClaimedPlayer != null)
+            {
+                myIdentity = myClaimedPlayer.Name;
+                StateHasChanged();
+            }
+        }
+    }
     private async Task WheelSpinTeams() {
         if (s == null || !IsHost) return;
 
-        // 1. Validation: Everyone must have a name AND have clicked "CLAIM"
+        // Validation
         if (s.UnassignedPlayers.Any(p => string.IsNullOrWhiteSpace(p.Name))) { 
             errorMessage = "Fill all player names first."; 
             return; 
@@ -498,19 +527,16 @@
         errorMessage = "";
         var rng = new Random();
 
-        // 2. Visual Animation
         for (int i = 0; i < 15; i++) {
             randomNameDisplay = s.UnassignedPlayers[rng.Next(s.UnassignedPlayers.Count)].Name;
             s.Notify(); 
             await Task.Delay(100);
         }
 
-        // 3. Shuffle and Assign Teams
         var shuffled = s.UnassignedPlayers.OrderBy(x => rng.Next()).ToList();
         s.Team1 = shuffled.Take(playersPerTeam).ToList();
         s.Team2 = shuffled.Skip(playersPerTeam).ToList();
 
-        // 4. Build Picking Order and Sync Identity
         s.PickingOrder.Clear();
         for(int i = 0; i < playersPerTeam; i++) { 
             s.PickingOrder.Add(s.Team1[i]); 
@@ -522,29 +548,33 @@
             p.TeamNumber = s.Team1.Contains(p) ? 1 : 2; 
         }
 
-        // 5. Finalize State & Broadcast
         GenerateBans();
         isSpinning = false; 
         s.View = "draft"; 
-        
-        // This ensures that even on the host's side, myIdentity is locked in
-        var mySlot = s.PickingOrder.FirstOrDefault(x => x.ClaimedBySessionId == browserId);
-        if (mySlot != null) myIdentity = mySlot.Name;
 
-        s.Notify(); // This pushes the "View = draft" and new Team lists to everyone
+        // CRITICAL FIX: Every client needs to know who they are. 
+        // We trigger a global notification so clients run their Refresh/Identity check
+        s.Notify(); 
     }
 
     private void SelectCharacter(Character chosen) {
-    if (s == null) return;
-    var p = s.PickingOrder[s.CurrentPickerIndex];
-    if (p.Name != myIdentity || string.IsNullOrEmpty(myIdentity)) return;
-    if (p.GetSeriesCount(chosen.Series) >= 2) return;
-    p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++));
-    s.CurrentPickerIndex = (s.CurrentPickerIndex + 1) % s.PickingOrder.Count;
-    if (s.PickingOrder.All(x => x.Roster.Count == 5)) { CheckForRivalry(); s.View = "battle"; }
-    s.Notify();
-    }
+        if (s == null) return;
+        var p = s.PickingOrder[s.CurrentPickerIndex];
+        
+        // DEBUG: If you're still locked out, check your console logs in the browser
+        if (p.ClaimedBySessionId != browserId) return; 
 
+        if (p.GetSeriesCount(chosen.Series) >= 2) return;
+        
+        p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++));
+        s.CurrentPickerIndex = (s.CurrentPickerIndex + 1) % s.PickingOrder.Count;
+        
+        if (s.PickingOrder.All(x => x.Roster.Count == 5)) { 
+            CheckForRivalry(); 
+            s.View = "battle"; 
+        }
+        s.Notify();
+    }
     private async Task RecordMatchResult() {
         // 1. Safety Checks
         if (s == null || !IsHost || s.HistoryRecorded) return;
