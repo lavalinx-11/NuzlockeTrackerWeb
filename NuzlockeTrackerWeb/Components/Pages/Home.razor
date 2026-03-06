@@ -591,46 +591,66 @@
         s.Notify();
     }
     private async Task RecordMatchResult() {
-        if (s == null || !IsHost || s.HistoryRecorded) return;
+    // 1. Safety Guard: Only the Host can write to the DB, 
+    // and we only record the match once.
+    if (s == null || !IsHost || s.HistoryRecorded) return;
 
-        try {
-            var result = new MatchResult {
-                Team1Key = GetTeamKey(s.Team1),
-                Team2Key = GetTeamKey(s.Team2),
-                Team1Names = s.Team1.Select(p => p.Name).ToList(),
-                Team2Names = s.Team2.Select(p => p.Name).ToList(),
-                Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                BanList = new List<string>(s.CurrentBans),
-
-                // FIXED LOGIC: Count how many PLAYERS were fully defeated
-                // Team 1 gets a point for every player on Team 2 who is "Lost"
-                Team1Rounds = s.Team2.Count(p => p.Roster.All(c => c.IsLost)),
-                Team2Rounds = s.Team1.Count(p => p.Roster.All(c => c.IsLost)),
-
-                WinningTeamSide = s.WinningTeamNumber,
-                MatchDate = DateTime.UtcNow
-            };
-
-            using (var db = await DbFactory.CreateDbContextAsync()) 
-            {
-                db.Matches.Add(result);
-                await db.SaveChangesAsync();
+    try {
+        // 2. Prepare the Match Data
+        var result = new MatchResult {
+            // Using a unique key based on player names to track team performance
+            Team1Key = GetTeamKey(s.Team1),
+            Team2Key = GetTeamKey(s.Team2),
             
-                // Refresh history so the UI updates immediately
-                s.MatchHistory = await db.Matches.OrderByDescending(m => m.Id).Take(20).ToListAsync();
-            }
+            // Convert current player objects to simple string lists for storage
+            Team1Names = s.Team1.Select(p => p.Name ?? "Unknown").ToList(),
+            Team2Names = s.Team2.Select(p => p.Name ?? "Unknown").ToList(),
+            
+            // Flatten the rosters into character name lists
+            Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+            Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+            
+            // Snapshot of the bans active during this specific match
+            BanList = new List<string>(s.CurrentBans),
+            
+            // Calculate scores based on the other team's casualties
+            Team1Rounds = s.Team2.Sum(p => p.Roster.Count(c => c.IsLost)),
+            Team2Rounds = s.Team1.Sum(p => p.Roster.Count(c => c.IsLost)),
+            
+            WinningTeamSide = s.WinningTeamNumber,
+            MatchDate = DateTime.UtcNow // Postgres prefers UTC for 'timestamp with time zone'
+        };
 
-            s.HistoryRecorded = true;
-            errorMessage = "";
-            s.Notify();
+        // 3. Save to Postgres
+        using (var db = await DbFactory.CreateDbContextAsync()) 
+        {
+            db.Matches.Add(result);
+            await db.SaveChangesAsync();
+            
+            // After saving, we pull the latest 20 matches to keep the UI perfectly synced
+            s.MatchHistory = await db.Matches
+                .OrderByDescending(m => m.Id)
+                .Take(20)
+                .ToListAsync();
         }
-        catch (Exception ex) {
-            var innerMsg = ex.InnerException?.Message ?? ex.Message;
-            errorMessage = $"Autosave Failed: {innerMsg}";
-            s.Notify();
-        }
+
+        // 4. Update Global Session State
+        s.HistoryRecorded = true;
+        errorMessage = ""; 
+        
+        // Notify all connected clients that the result is locked in
+        s.Notify(); 
+        
     }
+    catch (Exception ex) {
+        // This looks deep into the error to find the actual Postgres complaint
+        var realError = ex.InnerException?.Message ?? ex.Message;
+        errorMessage = $"Autosave Failed: {realError}";
+        Console.WriteLine($"❌ DATABASE SAVE ERROR: {realError}");
+        if (ex.InnerException != null) Console.WriteLine($"❌ INNER: {ex.InnerException.Message}");
+        s.Notify();
+    }
+}
 
     private async Task CheckVictory() {
         if (s == null) return;
