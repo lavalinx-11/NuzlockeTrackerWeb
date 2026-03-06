@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NuzlockeTrackerWeb.Components;
 using NuzlockeTrackerWeb.Components.GameData;
+
 using NuzlockeTrackerWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,31 +11,45 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 var url = builder.Environment.IsDevelopment() 
     ? $"http://localhost:{port}" 
     : $"http://0.0.0.0:{port}";
-
 builder.WebHost.UseUrls(url);
 
-// --- 2. DATABASE REGISTRATION (FIXED FOR RAILWAY) ---
-var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+// --- 2. DATABASE REGISTRATION (BULLETPROOF VERSION) ---
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 string? connectionString = null;
 
-if (!string.IsNullOrEmpty(rawConnectionString))
+if (!string.IsNullOrEmpty(databaseUrl))
 {
-    // Railway provides "postgres://", but Npgsql driver often requires "postgresql://"
-    connectionString = rawConnectionString.Replace("postgres://", "postgresql://");
+    try
+    {
+        // Manual Parsing of the Railway URI: postgres://user:password@host:port/database
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':');
+
+        connectionString = $"Host={uri.Host};" +
+                           $"Port={uri.Port};" +
+                           $"Username={userInfo[0]};" +
+                           $"Password={userInfo[1]};" +
+                           $"Database={uri.AbsolutePath.TrimStart('/')};" +
+                           $"Pooling=true;" +
+                           $"SSL Mode=Require;" +
+                           $"Trust Server Certificate=true;";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error parsing DATABASE_URL: {ex.Message}");
+    }
 }
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
     if (!string.IsNullOrEmpty(connectionString))
     {
-        // Production: Use PostgreSQL on Railway with the cleaned string
         options.UseNpgsql(connectionString);
     }
     else 
     {
-        // Local Testing: Use an In-Memory database
         options.UseInMemoryDatabase("NuzlockeLocalDB");
-        Console.WriteLine("⚠️ No DATABASE_URL found. Using In-Memory Database for local testing.");
+        Console.WriteLine("⚠️ No valid DATABASE_URL found or parsing failed. Using In-Memory Database.");
     }
 });
 
@@ -51,18 +66,17 @@ using (var scope = app.Services.CreateScope())
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
     using var db = factory.CreateDbContext();
     
-    // Only attempt migrations if we are connected to a real database (Postgres)
     if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
     {
         try 
         {
+            // This builds the tables on Railway automatically
             db.Database.Migrate();
+            Console.WriteLine("✅ Database migrations applied successfully.");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Migration failed: {ex.Message}");
-            // We don't throw here so the app might still start, 
-            // but you'll see the error in Railway logs.
         }
     }
 }
