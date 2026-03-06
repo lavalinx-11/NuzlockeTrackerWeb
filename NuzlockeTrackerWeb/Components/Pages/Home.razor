@@ -634,11 +634,14 @@
         
         // Notify all connected clients that the result is locked in
         s.Notify(); 
+        
     }
     catch (Exception ex) {
-        // Log the error for the Host and console
-        errorMessage = $"Autosave Failed: {ex.Message}";
-        Console.WriteLine($"❌ DATABASE SAVE ERROR: {ex.Message}");
+        // This looks deep into the error to find the actual Postgres complaint
+        var realError = ex.InnerException?.Message ?? ex.Message;
+        errorMessage = $"Autosave Failed: {realError}";
+        Console.WriteLine($"❌ DATABASE SAVE ERROR: {realError}");
+        if (ex.InnerException != null) Console.WriteLine($"❌ INNER: {ex.InnerException.Message}");
         s.Notify();
     }
 }

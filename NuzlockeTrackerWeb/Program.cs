@@ -1,7 +1,10 @@
+using Npgsql;
 using Microsoft.EntityFrameworkCore;
 using NuzlockeTrackerWeb.Components;
 using NuzlockeTrackerWeb.Components.GameData;
 using NuzlockeTrackerWeb.Data;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +17,7 @@ builder.WebHost.UseUrls(url);
 
 // --- 2. DATABASE REGISTRATION ---
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-string? connectionString = null;
+NpgsqlDataSource? dataSource = null;
 
 if (!string.IsNullOrEmpty(databaseUrl))
 {
@@ -23,21 +26,25 @@ if (!string.IsNullOrEmpty(databaseUrl))
         var uri = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':');
 
-        var connStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+        var connStringBuilder = new NpgsqlConnectionStringBuilder
         {
             Host = uri.Host,
             Port = uri.Port,
             Username = userInfo[0],
             Password = userInfo.Length > 1 ? userInfo[1] : string.Empty,
             Database = uri.AbsolutePath.TrimStart('/'),
-            SslMode = Npgsql.SslMode.Require,
+            SslMode = SslMode.Require,
             TrustServerCertificate = true,
             Pooling = true,
             CommandTimeout = 30 
         };
 
-        connectionString = connStringBuilder.ToString();
-        Console.WriteLine("✅ Database connection string built successfully.");
+        // --- NEW: Create DataSource with JSON Support ---
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connStringBuilder.ToString());
+        dataSourceBuilder.EnableDynamicJson(); // Enables List<string> to JSONB mapping
+        dataSource = dataSourceBuilder.Build();
+        
+        Console.WriteLine("✅ NpgsqlDataSource with Dynamic JSON enabled.");
     }
     catch (Exception ex)
     {
@@ -47,10 +54,10 @@ if (!string.IsNullOrEmpty(databaseUrl))
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
-    if (!string.IsNullOrEmpty(connectionString))
+    if (dataSource != null)
     {
-        // Standard Npgsql connection without naming plugins
-        options.UseNpgsql(connectionString);
+        // Use the DataSource instead of just the connection string
+        options.UseNpgsql(dataSource);
     }
     else 
     {
@@ -77,10 +84,8 @@ using (var scope = app.Services.CreateScope())
         if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
         {
             Console.WriteLine("🔄 Running EnsureCreated...");
-            // This builds the database schema based on your AppDbContext settings
             db.Database.EnsureCreated();
             
-            // LOGGING: This will tell us if Postgres made it "Matches" or "matches"
             using var command = db.Database.GetDbConnection().CreateCommand();
             command.CommandText = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';";
             db.Database.OpenConnection();
@@ -106,7 +111,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAntiforgery();
+
+// CHANGE THIS LINE:
+app.UseAntiforgery(); 
+
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
