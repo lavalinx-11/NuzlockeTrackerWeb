@@ -12,7 +12,7 @@ var url = builder.Environment.IsDevelopment()
     : $"http://0.0.0.0:{port}";
 builder.WebHost.UseUrls(url);
 
-// --- 2. DATABASE REGISTRATION (ULTIMATE BULLETPROOF VERSION) ---
+// --- 2. DATABASE REGISTRATION ---
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 string? connectionString = null;
 
@@ -23,7 +23,6 @@ if (!string.IsNullOrEmpty(databaseUrl))
         var uri = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':');
 
-        // Use the official builder to safely escape passwords and format the string
         var connStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
         {
             Host = uri.Host,
@@ -34,7 +33,7 @@ if (!string.IsNullOrEmpty(databaseUrl))
             SslMode = Npgsql.SslMode.Require,
             TrustServerCertificate = true,
             Pooling = true,
-            CommandTimeout = 30 // Prevents crashing if DB is slow to wake up
+            CommandTimeout = 30 
         };
 
         connectionString = connStringBuilder.ToString();
@@ -45,21 +44,17 @@ if (!string.IsNullOrEmpty(databaseUrl))
         Console.WriteLine($"❌ CRITICAL: DATABASE_URL parsing failed: {ex.Message}");
     }
 }
-else
-{
-    Console.WriteLine("⚠️ DATABASE_URL environment variable is NULL or EMPTY.");
-}
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
     if (!string.IsNullOrEmpty(connectionString))
     {
+        // Standard Npgsql connection without naming plugins
         options.UseNpgsql(connectionString);
     }
     else 
     {
         options.UseInMemoryDatabase("NuzlockeLocalDB");
-        Console.WriteLine("⚠️ No valid DATABASE_URL found. Using In-Memory Database.");
     }
 });
 
@@ -73,21 +68,32 @@ var app = builder.Build();
 // --- 4. AUTO-CREATE DATABASE TABLES ---
 using (var scope = app.Services.CreateScope())
 {
-    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    var services = scope.ServiceProvider;
     try 
     {
+        var factory = services.GetRequiredService<IDbContextFactory<AppDbContext>>();
         using var db = factory.CreateDbContext();
         
         if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
         {
-            Console.WriteLine("🔄 Attempting to apply migrations...");
+            Console.WriteLine("🔄 Running EnsureCreated...");
+            // This builds the database schema based on your AppDbContext settings
             db.Database.EnsureCreated();
-            Console.WriteLine("✅ Database migrations applied successfully.");
+            
+            // LOGGING: This will tell us if Postgres made it "Matches" or "matches"
+            using var command = db.Database.GetDbConnection().CreateCommand();
+            command.CommandText = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';";
+            db.Database.OpenConnection();
+            using var reader = command.ExecuteReader();
+            Console.WriteLine("📂 Current Tables in Postgres:");
+            while (reader.Read())
+            {
+                Console.WriteLine($"   - {reader[0]}");
+            }
         }
     }
     catch (Exception ex)
     {
-        // This will print the exact reason the database is failing to connect in the Railway logs
         Console.WriteLine($"❌ DATABASE STARTUP ERROR: {ex.Message}");
     }
 }
