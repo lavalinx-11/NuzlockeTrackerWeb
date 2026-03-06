@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NuzlockeTrackerWeb.Components;
 using NuzlockeTrackerWeb.Components.GameData;
-
 using NuzlockeTrackerWeb.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +12,7 @@ var url = builder.Environment.IsDevelopment()
     : $"http://0.0.0.0:{port}";
 builder.WebHost.UseUrls(url);
 
-// --- 2. DATABASE REGISTRATION (BULLETPROOF VERSION) ---
+// --- 2. DATABASE REGISTRATION (ULTIMATE BULLETPROOF VERSION) ---
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 string? connectionString = null;
 
@@ -21,23 +20,34 @@ if (!string.IsNullOrEmpty(databaseUrl))
 {
     try
     {
-        // Manual Parsing of the Railway URI: postgres://user:password@host:port/database
         var uri = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':');
 
-        connectionString = $"Host={uri.Host};" +
-                           $"Port={uri.Port};" +
-                           $"Username={userInfo[0]};" +
-                           $"Password={userInfo[1]};" +
-                           $"Database={uri.AbsolutePath.TrimStart('/')};" +
-                           $"Pooling=true;" +
-                           $"SSL Mode=Require;" +
-                           $"Trust Server Certificate=true;";
+        // Use the official builder to safely escape passwords and format the string
+        var connStringBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port,
+            Username = userInfo[0],
+            Password = userInfo.Length > 1 ? userInfo[1] : string.Empty,
+            Database = uri.AbsolutePath.TrimStart('/'),
+            SslMode = Npgsql.SslMode.Require,
+            TrustServerCertificate = true,
+            Pooling = true,
+            CommandTimeout = 30 // Prevents crashing if DB is slow to wake up
+        };
+
+        connectionString = connStringBuilder.ToString();
+        Console.WriteLine("✅ Database connection string built successfully.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ Error parsing DATABASE_URL: {ex.Message}");
+        Console.WriteLine($"❌ CRITICAL: DATABASE_URL parsing failed: {ex.Message}");
     }
+}
+else
+{
+    Console.WriteLine("⚠️ DATABASE_URL environment variable is NULL or EMPTY.");
 }
 
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
@@ -49,7 +59,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     else 
     {
         options.UseInMemoryDatabase("NuzlockeLocalDB");
-        Console.WriteLine("⚠️ No valid DATABASE_URL found or parsing failed. Using In-Memory Database.");
+        Console.WriteLine("⚠️ No valid DATABASE_URL found. Using In-Memory Database.");
     }
 });
 
@@ -64,20 +74,21 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
-    using var db = factory.CreateDbContext();
-    
-    if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
+    try 
     {
-        try 
+        using var db = factory.CreateDbContext();
+        
+        if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
         {
-            // This builds the tables on Railway automatically
+            Console.WriteLine("🔄 Attempting to apply migrations...");
             db.Database.Migrate();
             Console.WriteLine("✅ Database migrations applied successfully.");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"❌ Migration failed: {ex.Message}");
-        }
+    }
+    catch (Exception ex)
+    {
+        // This will print the exact reason the database is failing to connect in the Railway logs
+        Console.WriteLine($"❌ DATABASE STARTUP ERROR: {ex.Message}");
     }
 }
 
