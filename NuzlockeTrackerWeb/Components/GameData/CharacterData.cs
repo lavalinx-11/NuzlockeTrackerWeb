@@ -79,7 +79,7 @@ public static class CharacterData
         new Character("Kenpachi","Bleach", 72),
         new Character("Aizen","Bleach", 73),
         new Character("Yhwach","Bleach", 74),
-        new Character("Yamamomoto","Bleach", 75),
+        new Character("Yamamoto","Bleach", 75),
         new Character("Kisuke","Bleach", 76),
         new Character("Rikka","Misc", 77),
         new Character("Kazuma","Misc", 78),
