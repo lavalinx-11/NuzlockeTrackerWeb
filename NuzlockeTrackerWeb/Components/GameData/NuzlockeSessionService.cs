@@ -6,6 +6,8 @@ namespace NuzlockeTrackerWeb.Components.GameData
 {
     // --- SECTION: DATA MODELS ---
     public class MatchResult {
+        public int Id { get; set; } // <--- THE KEY ADDITION
+        public DateTime MatchDate { get; set; } = DateTime.UtcNow; // Good for sorting!
         public string Team1Key { get; set; } = "";
         public string Team2Key { get; set; } = "";
         public List<string> Team1Names { get; set; } = new();
