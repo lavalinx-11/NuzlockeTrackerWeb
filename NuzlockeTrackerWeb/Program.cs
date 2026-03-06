@@ -10,23 +10,31 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 var url = builder.Environment.IsDevelopment() 
     ? $"http://localhost:{port}" 
     : $"http://0.0.0.0:{port}";
+
 builder.WebHost.UseUrls(url);
 
-// --- 2. DATABASE REGISTRATION (FIXED) ---
-var connectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+// --- 2. DATABASE REGISTRATION (FIXED FOR RAILWAY) ---
+var rawConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+string? connectionString = null;
 
-// We use AddDbContextFactory so Home.razor can @inject IDbContextFactory<AppDbContext>
+if (!string.IsNullOrEmpty(rawConnectionString))
+{
+    // Railway provides "postgres://", but Npgsql driver often requires "postgresql://"
+    connectionString = rawConnectionString.Replace("postgres://", "postgresql://");
+}
+
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
 {
     if (!string.IsNullOrEmpty(connectionString))
     {
-        // Production: Use PostgreSQL on Railway
+        // Production: Use PostgreSQL on Railway with the cleaned string
         options.UseNpgsql(connectionString);
     }
     else 
     {
         // Local Testing: Use an In-Memory database
         options.UseInMemoryDatabase("NuzlockeLocalDB");
+        Console.WriteLine("⚠️ No DATABASE_URL found. Using In-Memory Database for local testing.");
     }
 });
 
@@ -40,13 +48,22 @@ var app = builder.Build();
 // --- 4. AUTO-CREATE DATABASE TABLES ---
 using (var scope = app.Services.CreateScope())
 {
-    // Note: We use the factory even here to stay consistent
     var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
     using var db = factory.CreateDbContext();
     
+    // Only attempt migrations if we are connected to a real database (Postgres)
     if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
     {
-        db.Database.Migrate();
+        try 
+        {
+            db.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Migration failed: {ex.Message}");
+            // We don't throw here so the app might still start, 
+            // but you'll see the error in Railway logs.
+        }
     }
 }
 
