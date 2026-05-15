@@ -191,5 +191,8 @@ public static class CharacterData
         new Character("Edward Elric","Misc", 184),
         new Character("Boa Hancock","One Piece", 185),
         new Character("Wano Law","One Piece", 186),
+        new Character("2B","Anime?", 187),
+        new Character("Shadow Dummy","Anime?", 188),
+        new Character("Raiden 2","MGS", 189),
     };
 }
