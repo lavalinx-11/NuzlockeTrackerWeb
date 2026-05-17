@@ -8,14 +8,12 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- 1. PORT CONFIGURATION ---
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 var url = builder.Environment.IsDevelopment() 
     ? $"http://localhost:{port}" 
     : $"http://0.0.0.0:{port}";
 builder.WebHost.UseUrls(url);
 
-// --- 2. DATABASE REGISTRATION ---
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 NpgsqlDataSource? dataSource = null;
 
@@ -39,16 +37,15 @@ if (!string.IsNullOrEmpty(databaseUrl))
             CommandTimeout = 30 
         };
 
-        // --- NEW: Create DataSource with JSON Support ---
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connStringBuilder.ToString());
-        dataSourceBuilder.EnableDynamicJson(); // Enables List<string> to JSONB mapping
+        dataSourceBuilder.EnableDynamicJson(); 
         dataSource = dataSourceBuilder.Build();
         
-        Console.WriteLine("✅ NpgsqlDataSource with Dynamic JSON enabled.");
+        Console.WriteLine("NpgsqlDataSource with Dynamic JSON enabled.");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ CRITICAL: DATABASE_URL parsing failed: {ex.Message}");
+        Console.WriteLine($"CRITICAL: DATABASE_URL parsing failed: {ex.Message}");
     }
 }
 
@@ -61,18 +58,15 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     }
     else 
     {
-        options.UseInMemoryDatabase("NuzlockeLocalDB");
-    }
+        options.UseNpgsql("Data Source=localapp.db");    }
 });
 
-// --- 3. APP SERVICES ---
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddSingleton<NuzlockeSessionService>();
 
 var app = builder.Build();
 
-// --- 4. AUTO-CREATE DATABASE TABLES ---
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -83,14 +77,14 @@ using (var scope = app.Services.CreateScope())
         
         if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory") 
         {
-            Console.WriteLine("🔄 Running EnsureCreated...");
-            db.Database.EnsureCreated();
+            Console.WriteLine("Running EnsureCreated...");
+            db.Database.Migrate();
             
             using var command = db.Database.GetDbConnection().CreateCommand();
             command.CommandText = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public';";
             db.Database.OpenConnection();
             using var reader = command.ExecuteReader();
-            Console.WriteLine("📂 Current Tables in Postgres:");
+            Console.WriteLine("Current Tables in Postgres:");
             while (reader.Read())
             {
                 Console.WriteLine($"   - {reader[0]}");
@@ -99,11 +93,10 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"❌ DATABASE STARTUP ERROR: {ex.Message}");
+        Console.WriteLine($"DATABASE STARTUP ERROR: {ex.Message}");
     }
 }
 
-// --- 5. MIDDLEWARE & ROUTING ---
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -111,8 +104,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// CHANGE THIS LINE:
 app.UseAntiforgery(); 
 
 app.MapStaticAssets();

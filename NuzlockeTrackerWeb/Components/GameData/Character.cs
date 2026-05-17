@@ -3,13 +3,12 @@ namespace NuzlockeTrackerWeb.Components.GameData;
 public class Character
 {
     public string Name { get; set; }
-    public string Series { get; set; } // Added for the "Max 2" rule
+    public string Series { get; set; } 
     public bool IsLost { get; set; }
     public bool IsBanned { get; set; }
     public bool IsSelected { get; set; }
     public int ID { get; set; }
-
-    // Updated constructor to include series
+    
     public Character(string name, string series, int id)
     {
         Name = name;
