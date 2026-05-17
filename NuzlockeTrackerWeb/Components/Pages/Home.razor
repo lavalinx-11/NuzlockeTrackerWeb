@@ -358,7 +358,7 @@
                         <h5 class="text-light mb-3">@p.Name</h5>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach(var character in p.Roster) {
-                                <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-danger")"
+                                <button class="btn @(character.IsLost ? "btn-info" : "btn-outline-info")"
                                         @onclick="async () => { character.IsLost = true; await CheckVictory(); s.Notify(); }"
                                         disabled="@character.IsLost">
                                     @(character.IsLost ? "💀" : "") @character.Name
@@ -593,14 +593,16 @@
         }
         s.Notify();
     }
+    
     private async Task RecordMatchResult() {
-        // FIXED: Removed !IsHost check
         if (s == null || s.HistoryRecorded) return;
 
-        // FIXED: Immediately lock the save state so nobody else triggers it while the DB is writing
         s.HistoryRecorded = true;
 
         try {
+            int t1TotalLost = s.Team1.Sum(p => p.Roster.Count(c => c.IsLost));
+            int t2TotalLost = s.Team2.Sum(p => p.Roster.Count(c => c.IsLost));
+
             var result = new MatchResult {
                 Team1Key = GetTeamKey(s.Team1),
                 Team2Key = GetTeamKey(s.Team2),
@@ -609,8 +611,10 @@
                 Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
                 Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
                 BanList = new List<string>(s.CurrentBans),
-                Team1Rounds = s.Team2.Count(p => p.Roster.All(c => c.IsLost)),
-                Team2Rounds = s.Team1.Count(p => p.Roster.All(c => c.IsLost)),
+            
+                Team1Rounds = s.Team2.Count > 0 ? (t2TotalLost / s.Team2.Count) : 0,
+                Team2Rounds = s.Team1.Count > 0 ? (t1TotalLost / s.Team1.Count) : 0,
+            
                 WinningTeamSide = s.WinningTeamNumber,
                 MatchDate = DateTime.UtcNow
             };
@@ -619,24 +623,24 @@
             {
                 db.Matches.Add(result);
                 await db.SaveChangesAsync();
-            
+        
                 s.MatchHistory = await db.Matches
                     .OrderByDescending(m => m.Id)
                     .Take(20)
                     .ToListAsync();
             }
-        
+    
             errorMessage = "";
             s.Notify();
         }
         catch (Exception ex) {
-            // FIXED: If the database save fails, unlock it so players can try again
             s.HistoryRecorded = false; 
             var innerMsg = ex.InnerException?.Message ?? ex.Message;
             errorMessage = $"Autosave Failed: {innerMsg}";
             s.Notify();
         }
     }
+    
     
     private async Task CheckVictory() {
         if (s == null) return;
