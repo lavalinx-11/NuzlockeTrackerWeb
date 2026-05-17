@@ -358,10 +358,10 @@
                         <h5 class="text-light mb-3">@p.Name</h5>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach(var character in p.Roster) {
-                                <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-info")"
+                                <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-danger")"
                                         @onclick="async () => { character.IsLost = true; await CheckVictory(); s.Notify(); }"
                                         disabled="@character.IsLost">
-                                    @character.Name @(character.IsLost ? "💀" : "")
+                                    @(character.IsLost ? "💀" : "") @character.Name
                                 </button>
                             }
                         </div>
@@ -594,52 +594,53 @@
         s.Notify();
     }
     private async Task RecordMatchResult() {
-        if (s == null || !IsHost || s.HistoryRecorded) return;
-            try {
-                var result = new MatchResult {
-                    Team1Key = GetTeamKey(s.Team1),
-                    Team2Key = GetTeamKey(s.Team2),
-                    Team1Names = s.Team1.Select(p => p.Name).ToList(),
-                    Team2Names = s.Team2.Select(p => p.Name).ToList(),
-                    Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                    Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                    BanList = new List<string>(s.CurrentBans),
+        // FIXED: Removed !IsHost check
+        if (s == null || s.HistoryRecorded) return;
 
-                    // FIXED LOGIC: Count how many PLAYERS were fully defeated
-                    // Team 1 gets a point for every player on Team 2 who is "Lost"
-                    Team1Rounds = s.Team2.Count(p => p.Roster.All(c => c.IsLost)),
-                    Team2Rounds = s.Team1.Count(p => p.Roster.All(c => c.IsLost)),
+        // FIXED: Immediately lock the save state so nobody else triggers it while the DB is writing
+        s.HistoryRecorded = true;
 
-                    WinningTeamSide = s.WinningTeamNumber,
-                    MatchDate = DateTime.UtcNow
-                };
+        try {
+            var result = new MatchResult {
+                Team1Key = GetTeamKey(s.Team1),
+                Team2Key = GetTeamKey(s.Team2),
+                Team1Names = s.Team1.Select(p => p.Name).ToList(),
+                Team2Names = s.Team2.Select(p => p.Name).ToList(),
+                Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+                Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+                BanList = new List<string>(s.CurrentBans),
+                Team1Rounds = s.Team2.Count(p => p.Roster.All(c => c.IsLost)),
+                Team2Rounds = s.Team1.Count(p => p.Roster.All(c => c.IsLost)),
+                WinningTeamSide = s.WinningTeamNumber,
+                MatchDate = DateTime.UtcNow
+            };
 
-                using (var db = await DbFactory.CreateDbContextAsync())
-                {
-                    db.Matches.Add(result);
-                    await db.SaveChangesAsync();
-                    
-                    s.MatchHistory = await db.Matches
-                        .OrderByDescending(m => m.Id)
-                        .Take(20)
-                        .ToListAsync();
-                }
-                
-                s.HistoryRecorded = true;
-                errorMessage = "";
-                s.Notify();
+            using (var db = await DbFactory.CreateDbContextAsync())
+            {
+                db.Matches.Add(result);
+                await db.SaveChangesAsync();
+            
+                s.MatchHistory = await db.Matches
+                    .OrderByDescending(m => m.Id)
+                    .Take(20)
+                    .ToListAsync();
             }
-            catch (Exception ex) {
-                var innerMsg = ex.InnerException?.Message ?? ex.Message;
-                errorMessage = $"Autosave Failed: {innerMsg}";
-                s.Notify();
-            }
-        }  
-
+        
+            errorMessage = "";
+            s.Notify();
+        }
+        catch (Exception ex) {
+            // FIXED: If the database save fails, unlock it so players can try again
+            s.HistoryRecorded = false; 
+            var innerMsg = ex.InnerException?.Message ?? ex.Message;
+            errorMessage = $"Autosave Failed: {innerMsg}";
+            s.Notify();
+        }
+    }
+    
     private async Task CheckVictory() {
         if (s == null) return;
 
-        // 1. Detect if the game ended
         if (s.Team1.All(p => p.Roster.All(c => c.IsLost))) 
         {
             s.WinningTeamNumber = 2;
@@ -649,8 +650,7 @@
             s.WinningTeamNumber = 1;
         }
 
-        // 2. If someone won, and I am the host, and we haven't recorded it yet...
-        if (s.WinningTeamNumber != 0 && IsHost && !s.HistoryRecorded) 
+        if (s.WinningTeamNumber != 0 && !s.HistoryRecorded) 
         {
             await RecordMatchResult();
         }
