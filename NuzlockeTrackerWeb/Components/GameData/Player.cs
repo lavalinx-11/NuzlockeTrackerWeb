@@ -25,4 +25,13 @@ public class Player
     {
         return Roster.Count(c => c.Series.Equals(seriesName, StringComparison.OrdinalIgnoreCase));
     }
+
+    public int GetZTier(CharacterTier tier)
+    {
+        if (tier == CharacterTier.Z)
+        {
+            return 1;
+        }
+        return 0;
+    }
 }

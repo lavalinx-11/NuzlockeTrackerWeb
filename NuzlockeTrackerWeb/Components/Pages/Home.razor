@@ -11,7 +11,7 @@
     @* --- SECTION: DEBUG NAVIGATION --- *@
     <div class="d-flex justify-content-center gap-2 mb-4 bg-dark p-2 rounded shadow-sm sticky-top" style="z-index: 1000;">
         <button class="btn btn-sm btn-outline-secondary" @onclick='() => { if(s!=null) s.View = "menu"; }'>Main Menu</button>
-        <button class="btn btn-sm btn-outline-success" @onclick='() => { if(s!=null) s.View = "stats"; }'>🏆 Hall of Fame</button>
+        <button class="btn btn-sm btn-outline-info" @onclick='() => { if(s!=null) s.View = "stats"; }'>🏆 Hall of Fame</button>
     </div>
 
     <div class="container py-4">
@@ -23,7 +23,7 @@
                 <button class="btn btn-primary mb-3" @onclick="CreateNewRoom">Host New Session</button>
                 <div class="input-group">
                     <input @bind="joinCode" class="form-control bg-black text-white" placeholder="Enter Room Code" />
-                    <button class="btn btn-outline-success" @onclick="JoinRoom">Join</button>
+                    <button class="btn btn-outline-info" @onclick="JoinRoom">Join</button>
                 </div>
                 @if(!string.IsNullOrEmpty(errorMessage)) { <div class="text-danger mt-2 small">@errorMessage</div> }
             </div>
@@ -59,10 +59,10 @@
         <div class="row g-4">
             <div class="col-md-8">
                 <div class="card bg-dark border-success text-light shadow h-100">
-                    <div class="card-header border-success bg-black d-flex justify-content-between align-items-center p-0">
+                    <div class="card-header border-info bg-black d-flex justify-content-between align-items-center p-0">
                         <div class="btn-group w-100">
-                            <button class="btn btn-square @(statsTab == "players" ? "btn-success" : "btn-dark")" @onclick='() => statsTab = "players"'>👤 Player Rankings</button>
-                            <button class="btn btn-square @(statsTab == "teams" ? "btn-success" : "btn-dark")" @onclick='() => statsTab = "teams"'>👥 Team Records</button>
+                            <button class="btn btn-square @(statsTab == "players" ? "btn-info" : "btn-dark")" @onclick='() => statsTab = "players"'>👤 Player Rankings</button>
+                            <button class="btn btn-square @(statsTab == "teams" ? "btn-info" : "btn-dark")" @onclick='() => statsTab = "teams"'>👥 Team Records</button>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -215,9 +215,9 @@
                         <div class="input-group">
                             @if (isClaimedByMe && !p.IsLocked) {
                                 <input @bind="myTemporaryName" 
-                                       class="form-control bg-dark text-white border-info shadow-glow-info" 
+                                       class="form-control bg-white text-white border-info shadow-glow-info" 
                                        placeholder="Your Name..." />
-                                <button class="btn btn-success" @onclick="() => LockMyName(p)">LOCK</button>
+                                <button class="btn btn-info" @onclick="() => LockMyName(p)">LOCK</button>
                             }
                             else {
                                 <input value="@(string.IsNullOrEmpty(p.Name) ? "Empty Slot" : p.Name)" 
@@ -319,7 +319,7 @@
                     </select>
                 </div>
                 <div class="col-md-8">
-                    <input @bind="searchQuery" @bind:event="oninput" class="form-control bg-dark text-white border-secondary" placeholder="Search characters..." />
+                    <input @bind="searchQuery" @bind:event="oninput" class="form-control bg-white text-white border-secondary" placeholder="Search characters..." />
                 </div>
             </div>
 
@@ -428,7 +428,12 @@
     private string myTemporaryName = "";
     private bool IsHost => s?.HostId == browserId;
 
-    private readonly List<string> StaticBans = new() { "Denji", "Achilles", "Pucci", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Yuji Itadori" };
+    
+    // Perma Bans
+    private readonly List<string> StaticBans = new() { "Denji", "Achilles", "Pucci", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Itadori Yuji", "Soulja Boy", "Gohan" };
+    
+    
+    // Rotating bans
     private readonly List<string> RotatingPool = new() {
         "Soulja Boy", "Kazuma", "Misaka", "Usopp", "Crocodile", "Enel", "Jiren", "Yoshikage Kira", "Hol Horse", "Ishtar", "Meruem",
         "Morel","Madara", "PTS Luffy", "TS Luffy", "TS Zoro", "TS Sanji", "Kizaru", "Akainu", "Arlong", "Namek Goku", 
@@ -576,15 +581,33 @@
     }
 
     private void SelectCharacter(Character chosen) {
+        
         if (s == null) return;
         var p = s.PickingOrder[s.CurrentPickerIndex];
+
+     
         
         // DEBUG: If you're still locked out, check your console logs in the browser
         if (p.ClaimedBySessionId != browserId) return; 
 
         if (p.GetSeriesCount(chosen.Series) >= 2) return;
         
-        p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++));
+        var currentTeamList = p.TeamNumber == 1 ? s.Team1 : s.Team2;
+
+        // Check if ANY player on this specific team already has a Z-Tier character
+        bool teamAlreadyHasZTier = currentTeamList.Any(player => 
+            player.Roster.Any(character => character.Tier == CharacterTier.Z)
+        );
+
+        // If the team already locked a Z-Tier and the user tries to draft another, block it
+        if (teamAlreadyHasZTier && chosen.Tier == CharacterTier.Z) {
+            errorMessage = $"Team {p.TeamNumber} already has a Z-Tier character!";
+            s.Notify();
+            return;
+        }
+        
+        
+        p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++, chosen.Tier));
         s.CurrentPickerIndex = (s.CurrentPickerIndex + 1) % s.PickingOrder.Count;
         
         if (s.PickingOrder.All(x => x.Roster.Count == 5)) { 
@@ -684,6 +707,7 @@
     if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
     stats[n].Wins++; stats[n].CurrentStreak++;
     }
+    
     foreach (var n in losers) {
     if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
     stats[n].Losses++; stats[n].CurrentStreak = 0;

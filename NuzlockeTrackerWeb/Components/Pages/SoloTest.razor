@@ -577,7 +577,7 @@ isSpinning = false; view = "draft"; currentPickerIndex = 0;
 private void SelectCharacter(Character chosen) {
 var p = PickingOrder[currentPickerIndex];
 if (p.GetSeriesCount(chosen.Series) >= 2) { errorMessage = "Series cap (2) reached!"; return; }
-p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++));
+p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++,chosen.Tier));
 searchQuery = ""; errorMessage = "";
 currentPickerIndex = (currentPickerIndex + 1) % PickingOrder.Count;
 if (PickingOrder.All(x => x.Roster.Count == 5)) { CheckForRivalry(); view = "battle"; }
