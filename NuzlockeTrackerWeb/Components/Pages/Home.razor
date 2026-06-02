@@ -11,8 +11,7 @@
     @* --- SECTION: DEBUG NAVIGATION --- *@
     <div class="d-flex justify-content-center gap-2 mb-4 bg-dark p-2 rounded shadow-sm sticky-top" style="z-index: 1000;">
         <button class="btn btn-sm btn-outline-secondary" @onclick='() => { if(matchSession!=null) matchSession.View = "menu"; }'>Main Menu</button>
-        <button class="btn btn-sm btn-outline-info" @onclick='() => { if(matchSession!=null) matchSession.View = "stats"; }'>🏆 Hall of Fame</button>
-    </div>
+        <a class="btn btn-sm btn-outline-info" href="/stats" target="_blank">🏆 Hall of Fame</a>    </div>
 
     <div class="container py-4">
         @if (matchSession == null) {
@@ -45,12 +44,12 @@
                     <small class="text-uppercase fw-bold">Waiting for Host...</small>
                 </div>
                 }
-                <button class="btn btn-outline-info btn-lg px-5 shadow" @onclick='() => matchSession.View = "stats"'>View Stats</button>
-            </div>
+                <a class="btn btn-outline-info btn-lg px-5 shadow" href="/stats" target="_blank">View Stats</a>     
+                </div>
         </div>
         }
-        else if (matchSession.View == "stats") {
-        @* --- SECTION: STATISTICS (HALL OF FAME) --- *@
+        @*else if (matchSession.View == "stats") {
+        $1$ --- SECTION: STATISTICS (HALL OF FAME) --- #1#
         <div class="text-center mb-4">
             <h2 class="text-black fw-bold">MATCH HISTORY</h2>
             <p class="text-black-50 fw-bold">Player And Team Match Data</p>
@@ -191,7 +190,7 @@
                 </div>
             </div>
         </div>
-    }
+    }*@
         else if (matchSession.View == "setup") {
         <h3 class="text-light mb-4">Room Setup</h3>
         <div class="card bg-dark text-light p-4 shadow border-secondary">
