@@ -45,20 +45,20 @@
                     <small class="text-uppercase fw-bold">Waiting for Host...</small>
                 </div>
                 }
-                <button class="btn btn-outline-success btn-lg px-5 shadow" @onclick='() => s.View = "stats"'>View Stats</button>
+                <button class="btn btn-outline-info btn-lg px-5 shadow" @onclick='() => s.View = "stats"'>View Stats</button>
             </div>
         </div>
         }
         else if (s.View == "stats") {
         @* --- SECTION: STATISTICS (HALL OF FAME) --- *@
         <div class="text-center mb-4">
-            <h2 class="text-success fw-bold">SESSION STATISTICS</h2>
-            <p class="text-white-50">Individual form and historical match data</p>
+            <h2 class="text-black fw-bold">MATCH HISTORY</h2>
+            <p class="text-black-50">Player And Team Match Data</p>
         </div>
 
         <div class="row g-4">
             <div class="col-md-8">
-                <div class="card bg-dark border-success text-light shadow h-100">
+                <div class="card bg-dark border-info text-light shadow h-100">
                     <div class="card-header border-info bg-black d-flex justify-content-between align-items-center p-0">
                         <div class="btn-group w-100">
                             <button class="btn btn-square @(statsTab == "players" ? "btn-info" : "btn-dark")" @onclick='() => statsTab = "players"'>👤 Player Rankings</button>
@@ -73,7 +73,7 @@
                             @foreach (var stat in GetPlayerStats()) {
                             <tr>
                                 <td class="fw-bold">@stat.Name</td>
-                                <td><span class="text-success">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
+                                <td><span class="text-info">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
                                 <td>
                                     @if (stat.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @stat.CurrentStreak</span> }
                                     else { <span class="text-white">@stat.CurrentStreak</span> }
@@ -90,7 +90,7 @@
                             @foreach (var team in GetTeamStats()) {
                             <tr>
                                 <td class="fw-bold text-warning">@team.TeamComposition</td>
-                                <td class="text-success">@team.Wins</td><td class="text-danger">@team.Losses</td><td class="text-info">@team.Ratio%</td>
+                                <td class="text-info">@team.Wins</td><td class="text-danger">@team.Losses</td><td class="text-info">@team.Ratio%</td>
                             </tr>
                             }
                             </tbody>
@@ -264,6 +264,13 @@
             <small class="text-uppercase">Picking for Team @activePicker?.TeamNumber</small>
             @if(isMyTurn) { <div class="text-danger fw-bold animate-pulse mt-1">YOUR TURN!</div> }
         </div>
+        
+        @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger text-center fw-bold border-danger py-2 mb-3 reveal-card animate-pulse">
+                    ⚠️ @errorMessage
+                </div>
+            }
 
         <div class="text-center mb-3">
             <button class="btn btn-sm btn-outline-danger" @onclick="() => showBans = !showBans">Bans (@s.CurrentBans.Count)</button>
@@ -584,13 +591,17 @@
         
         if (s == null) return;
         var p = s.PickingOrder[s.CurrentPickerIndex];
-
+        errorMessage = "";
      
         
         // DEBUG: If you're still locked out, check your console logs in the browser
         if (p.ClaimedBySessionId != browserId) return; 
 
-        if (p.GetSeriesCount(chosen.Series) >= 2) return;
+        if (p.GetSeriesCount(chosen.Series) >= 2) {
+            errorMessage = "You cannot pick more than 2 characters from the same series!";
+            s.Notify();
+            return;
+        }
         
         var currentTeamList = p.TeamNumber == 1 ? s.Team1 : s.Team2;
 
