@@ -1,6 +1,128 @@
 @page "/Stats"
-<h3>Stats</h3>
+@rendermode InteractiveServer
+@using NuzlockeTrackerWeb.Data
+@using Microsoft.EntityFrameworkCore
+@using NuzlockeTrackerWeb.Components.GameData
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager NavManager
 
+
+<h3>Stats</h3>
+ <div class="container py-4">
+    @* The HTML UI checks our renamed variables to decide what layout to show *@
+    @if (_activeDetailedMatch != null)
+    {
+        <div class="card bg-dark text-light border-secondary p-4">
+            <button class="btn btn-outline-secondary mb-3" @onclick="() => _activeDetailedMatch = null">
+                ← Back to Leaderboards
+            </button>
+            <h3>Match Detail Analysis</h3>
+            <p>Played on: @_activeDetailedMatch.MatchDate.ToLocalTime()</p>
+            
+            @* Displaying teams from our tracked active match item *@
+            <div class="fw-bold text-warning">
+                @string.Join(", ", _activeDetailedMatch.Team1Names) vs @string.Join(", ", _activeDetailedMatch.Team2Names)
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mb-4">
+            <h2 class="text-white fw-bold">HALL OF FAME</h2>
+            
+            <div class="btn-group my-3">
+                <button class="btn @(_currentStatsCategory == "players" ? "btn-info" : "btn-dark")" 
+                        @onclick='() => _currentStatsCategory = "players"'>👤 Players</button>
+                <button class="btn @(_currentStatsCategory == "teams" ? "btn-info" : "btn-dark")" 
+                        @onclick='() => _currentStatsCategory = "teams"'>👥 Teams</button>
+            </div>
+        </div>
+
+        @if (_currentStatsCategory == "players")
+        {
+            <table class="table table-dark text-center">
+                <thead><tr><th>Player</th><th>W - L</th></tr></thead>
+                <tbody>
+                    @foreach (var player in _playerRankings)
+                    {
+                        <tr>
+                            <td class="fw-bold text-info">@player.PlayerName</td>
+                            <td>@player.Wins - @player.Losses</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <h4 class="text-white mt-4">Recent Global Matches</h4>
+        <div class="list-group">
+            @foreach (var match in _historicalMatches)
+            {
+                @* Clicking a row updates our descriptive pointer, instantly shifting the UI state *@
+                <button class="list-group-item list-group-item-action bg-dark text-white border-secondary"
+                        @onclick="() => _activeDetailedMatch = match">
+                    <span>@string.Join(" & ", match.Team1Names)</span> 
+                    <span class="text-warning mx-2">@match.Team1Rounds - @match.Team2Rounds</span>
+                    <span>@string.Join(" & ", match.Team2Names)</span>
+                </button>
+            }
+        </div>
+    }
+</div>
 @code {
+    private List<MatchResult> _historicalMatches = new();
+    private MatchResult? _activeDetailedMatch = null;
+    private string _currentStatsCategory = "players"; // Replaces "statsTab"
     
-}
+    private List<PlayerLeaderboardEntry> _playerRankings = new();
+    private List<TeamCompositionRecord> _teamRecords = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Establish a secure, dedicated connection thread to your DB
+        using var db = await DbFactory.CreateDbContextAsync();
+        
+        // 2. Fetch the data buckets directly out of EF Core
+        var matchesFromDatabase = await db.Matches
+            .OrderByDescending(m => m.Id)
+            .Take(50) // Grab 50 records to give your history page some depth
+            .ToListAsync();
+
+        // 3. Populate our local storage variables safely
+        _historicalMatches = matchesFromDatabase;
+        _playerRankings = RunPlayerMathEngine(_historicalMatches);
+        _teamRecords = RunTeamMathEngine(_historicalMatches);
+    }
+
+    // --- Cleaned up logic loops from your old page ---
+    private List<PlayerLeaderboardEntry> RunPlayerMathEngine(List<MatchResult> history)
+    {
+        // Paste the exact business math inside your original GetPlayerStats() loop here.
+        // Just make sure it processes the passed-in "history" parameter instead of "matchSession.MatchHistory"!
+        return new List<PlayerLeaderboardEntry>();
+    }
+
+    private List<TeamCompositionRecord> RunTeamMathEngine(List<MatchResult> history)
+    {
+        // Paste your exact GetTeamStats() logic here.
+        return new List<TeamCompositionRecord>();
+    }
+
+    // --- Clean, Readable Data Transfer Objects (DTOs) ---
+    public class PlayerLeaderboardEntry
+    {
+        public string PlayerName { get; set; } = "";
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int CurrentStreak { get; set; }
+        public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
+    }
+
+    public class TeamCompositionRecord
+    {
+        public string TeamComposition { get; set; } = "";
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
+    }
+ }

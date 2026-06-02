@@ -10,12 +10,12 @@
 
     @* --- SECTION: DEBUG NAVIGATION --- *@
     <div class="d-flex justify-content-center gap-2 mb-4 bg-dark p-2 rounded shadow-sm sticky-top" style="z-index: 1000;">
-        <button class="btn btn-sm btn-outline-secondary" @onclick='() => { if(s!=null) s.View = "menu"; }'>Main Menu</button>
-        <button class="btn btn-sm btn-outline-info" @onclick='() => { if(s!=null) s.View = "stats"; }'>🏆 Hall of Fame</button>
+        <button class="btn btn-sm btn-outline-secondary" @onclick='() => { if(matchSession!=null) matchSession.View = "menu"; }'>Main Menu</button>
+        <button class="btn btn-sm btn-outline-info" @onclick='() => { if(matchSession!=null) matchSession.View = "stats"; }'>🏆 Hall of Fame</button>
     </div>
 
     <div class="container py-4">
-        @if (s == null) {
+        @if (matchSession == null) {
         @* --- SECTION: MULTIPLAYER ENTRY (JOIN LOBBY) --- *@
         <div class="text-center mt-5 reveal-card">
             <h1 class="display-4 fw-bold text-primary">ABA NUZLOCKE</h1>
@@ -29,13 +29,13 @@
             </div>
         </div>
         }
-        else if (s.View == "menu") {
+        else if (matchSession.View == "menu") {
         @* --- SECTION: MAIN MENU --- *@
         <div class="text-center mt-5">
             <h1 class="display-4 fw-bold text-primary">ABA NUZLOCKE</h1>
             <div class="card bg-black border-secondary p-2 mb-4 mx-auto" style="max-width: 200px;">
                 <small class="text-white">ROOM CODE</small>
-                <h4 class="text-warning mb-0">@s.Id</h4>
+                <h4 class="text-warning mb-0">@matchSession.Id</h4>
             </div>
             <div class="mt-4 d-grid gap-2 d-sm-block">
                 @if (IsHost) {
@@ -45,11 +45,11 @@
                     <small class="text-uppercase fw-bold">Waiting for Host...</small>
                 </div>
                 }
-                <button class="btn btn-outline-info btn-lg px-5 shadow" @onclick='() => s.View = "stats"'>View Stats</button>
+                <button class="btn btn-outline-info btn-lg px-5 shadow" @onclick='() => matchSession.View = "stats"'>View Stats</button>
             </div>
         </div>
         }
-        else if (s.View == "stats") {
+        else if (matchSession.View == "stats") {
         @* --- SECTION: STATISTICS (HALL OF FAME) --- *@
         <div class="text-center mb-4">
             <h2 class="text-black fw-bold">MATCH HISTORY</h2>
@@ -120,8 +120,8 @@
                     <div class="card-header bg-black"><h5>Full Match History</h5></div>
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush">
-                            @for (int i = s.MatchHistory.Count - 1; i >= 0; i--) {
-                                var match = s.MatchHistory[i];
+                            @for (int i = matchSession.MatchHistory.Count - 1; i >= 0; i--) {
+                                var match = matchSession.MatchHistory[i];
                                 var idx = i;
                                 <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3" @onclick="() => OpenMatchDetail(idx)">
                                     <div class="row align-items-center">
@@ -148,11 +148,11 @@
                 </div>
             </div>
         </div>
-        <div class="text-center mt-4"><button class="btn btn-secondary" @onclick='() => s.View = "menu"'>Back</button></div>
+        <div class="text-center mt-4"><button class="btn btn-secondary" @onclick='() => matchSession.View = "menu"'>Back</button></div>
     }
-    else if (s.View == "matchDetail" && selectedMatch != null) {
+    else if (matchSession.View == "matchDetail" && selectedMatch != null) {
         <div class="reveal-card">
-            <button class="btn btn-outline-secondary mb-4" @onclick='() => s.View = "stats"'>← Back to Stats</button>
+            <button class="btn btn-outline-secondary mb-4" @onclick='() => matchSession.View = "stats"'>← Back to Stats</button>
             <div class="card bg-dark border-secondary shadow mb-4">
                 <div class="card-header bg-black py-4 border-secondary text-center">
                     <div class="row align-items-center">
@@ -192,7 +192,7 @@
             </div>
         </div>
     }
-        else if (s.View == "setup") {
+        else if (matchSession.View == "setup") {
         <h3 class="text-light mb-4">Room Setup</h3>
         <div class="card bg-dark text-light p-4 shadow border-secondary">
             <div class="mb-4">
@@ -206,10 +206,10 @@
 
             <h5 class="mb-3">Claim a Slot & Enter Name:</h5>
             <div class="row g-3">
-                @foreach (var p in s.UnassignedPlayers) {
+                @foreach (var p in matchSession.UnassignedPlayers) {
                     bool isLocked = p.IsLocked || (!string.IsNullOrEmpty(p.ClaimedBySessionId) && p.ClaimedBySessionId != browserId);
                     bool isClaimedByMe = p.ClaimedBySessionId == browserId;
-                    bool iAlreadyHaveAClaim = s.UnassignedPlayers.Any(other => other.ClaimedBySessionId == browserId);
+                    bool iAlreadyHaveAClaim = matchSession.UnassignedPlayers.Any(other => other.ClaimedBySessionId == browserId);
 
                     <div class="col-md-4">
                         <div class="input-group">
@@ -257,8 +257,8 @@
             </div>
         </div>
         }
-        else if (s.View == "draft") {
-        var activePicker = s.PickingOrder.ElementAtOrDefault(s.CurrentPickerIndex);
+        else if (matchSession.View == "draft") {
+        var activePicker = matchSession.PickingOrder.ElementAtOrDefault(matchSession.CurrentPickerIndex);
         bool isMyTurn = activePicker?.ClaimedBySessionId == browserId;
         <div class="alert alert-info text-center py-3">
             <h4 class="mb-0">Turn: <span class="fw-bold">@(activePicker?.Name ?? "...")</span></h4>
@@ -274,11 +274,11 @@
             }
 
         <div class="text-center mb-3">
-            <button class="btn btn-sm btn-outline-danger" @onclick="() => showBans = !showBans">Bans (@s.CurrentBans.Count)</button>
+            <button class="btn btn-sm btn-outline-danger" @onclick="() => showBans = !showBans">Bans (@matchSession.CurrentBans.Count)</button>
             @if (showBans) {
             <div class="card card-body bg-dark border-danger p-2 mt-2">
                 <div class="d-flex flex-wrap gap-1 justify-content-center mb-2">
-                    @foreach (var ban in s.CurrentBans.OrderBy(x => x)) { <span class="badge border border-danger text-danger">@ban</span> }
+                    @foreach (var ban in matchSession.CurrentBans.OrderBy(x => x)) { <span class="badge border border-danger text-danger">@ban</span> }
                 </div>
                 @if(IsHost) { <button class="btn btn-sm btn-outline-warning w-25 mx-auto" @onclick="GenerateBans">🔄 REROLL</button> }
             </div>
@@ -288,7 +288,7 @@
         <div class="row g-4">
             <div class="col-md-6">
                 <h2 class="text-info border-bottom pb-2">TEAM 1</h2>
-                @foreach(var p in s.Team1) {
+                @foreach(var p in matchSession.Team1) {
                 <div class="card bg-dark mb-2 @(activePicker == p ? "border-info border-3 shadow-glow-info" : "border-secondary")">
                     <div class="card-body p-2">
                         <span class="badge bg-info text-dark fw-bold fs-6 mb-2">@p.Name @(p.Name == myIdentity ? "(YOU)" : "")</span>
@@ -302,7 +302,7 @@
             </div>
             <div class="col-md-6 text-end">
                 <h2 class="text-danger border-bottom pb-2">TEAM 2</h2>
-                @foreach(var p in s.Team2) {
+                @foreach(var p in matchSession.Team2) {
                 <div class="card bg-dark mb-2 @(activePicker == p ? "border-danger border-3 shadow-glow-danger" : "border-secondary")">
                     <div class="card-body p-2">
                         <span class="badge bg-danger text-white fw-bold fs-6 mb-2">@(p.Name == myIdentity ? "(YOU) " : "")@p.Name</span>
@@ -333,8 +333,8 @@
 
             <div class="d-flex flex-wrap gap-2 justify-content-center overflow-auto" style="max-height: 400px;">
                 @foreach (var charItem in GetFilteredCharacters()) {
-                bool isBanned = s.CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
-                bool taken = s.PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
+                bool isBanned = matchSession.CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
+                bool taken = matchSession.PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
                 <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled" : (taken ? "btn-secondary disabled opacity-25" : "btn-outline-primary"))"
                         style="min-width: 140px;" @onclick="() => SelectCharacter(charItem)" disabled="@(taken || isBanned || !isMyTurn)">
                     <div class="fw-bold text-white">@charItem.Name</div>
@@ -344,11 +344,11 @@
             </div>
         </div>
         }
-        else if (s.View == "battle") {
-        @if (!string.IsNullOrEmpty(s.RivalryText)) {
+        else if (matchSession.View == "battle") {
+        @if (!string.IsNullOrEmpty(matchSession.RivalryText)) {
         <div class="text-center mb-3">
             <div class="badge bg-danger p-2 px-4 shadow-sm border border-warning rivalry-pulse">
-                <span class="text-warning fw-bold">🔥 RIVALRY MATCH:</span> @s.RivalryText
+                <span class="text-warning fw-bold">🔥 RIVALRY MATCH:</span> @matchSession.RivalryText
             </div>
         </div>
         }
@@ -360,14 +360,14 @@
         <div class="row g-4">
             <div class="col-md-6">
                 <h2 class="text-info border-bottom pb-2">TEAM 1</h2>
-                @foreach(var p in s.Team1) {
+                @foreach(var p in matchSession.Team1) {
                 <div class="card bg-dark mb-3 @(p.Roster.All(c => c.IsLost) ? "opacity-50 grayscale shadow-none" : "border-info shadow-sm")">
                     <div class="card-body">
                         <h5 class="text-light mb-3">@p.Name</h5>
                         <div class="d-flex flex-wrap gap-2">
                             @foreach(var character in p.Roster) {
                                 <button class="btn @(character.IsLost ? "btn-info" : "btn-outline-info")"
-                                        @onclick="async () => { character.IsLost = true; await CheckVictory(); s.Notify(); }"
+                                        @onclick="async () => { character.IsLost = true; await CheckVictory(); matchSession.Notify(); }"
                                         disabled="@character.IsLost">
                                     @(character.IsLost ? "💀" : "") @character.Name
                                 </button>
@@ -379,14 +379,14 @@
             </div>
             <div class="col-md-6 text-end">
                 <h2 class="text-danger border-bottom pb-2">TEAM 2</h2>
-                @foreach(var p in s.Team2) {
+                @foreach(var p in matchSession.Team2) {
                 <div class="card bg-dark mb-3 @(p.Roster.All(c => c.IsLost) ? "opacity-50 grayscale shadow-none" : "border-danger shadow-sm")">
                     <div class="card-body">
                         <h5 class="text-light mb-3">@p.Name</h5>
                         <div class="d-flex flex-wrap gap-2 justify-content-end">
                             @foreach(var character in p.Roster) {
                             <button class="btn @(character.IsLost ? "btn-danger" : "btn-outline-danger")"
-                                    @onclick="() => { character.IsLost = true; CheckVictory(); s.Notify(); }"
+                                    @onclick="() => { character.IsLost = true; CheckVictory(); matchSession.Notify(); }"
                                     disabled="@character.IsLost">
                                 @(character.IsLost ? "💀" : "") @character.Name
                             </button>
@@ -398,17 +398,17 @@
             </div>
         </div>
 
-        @if (s.WinningTeamNumber != 0) {
+        @if (matchSession.WinningTeamNumber != 0) {
             <div class="modal-backdrop fade show" style="background-color: rgba(0,0,0,0.85); z-index: 1050;"></div>
             <div class="position-fixed top-50 start-50 translate-middle w-100 text-center" style="z-index: 1060;">
                 <div class="reveal-card">
                     <h1 class="display-1 animate-bounce">🏆</h1>
                     <h1 class="display-2 fw-bold text-warning" style="text-shadow: 0 0 20px rgba(255,193,7,0.5);">
-                        TEAM @s.WinningTeamNumber WINS
+                        TEAM @matchSession.WinningTeamNumber WINS
                     </h1>
             
                     <div class="mt-4">
-                        @if (!s.HistoryRecorded) {
+                        @if (!matchSession.HistoryRecorded) {
                             <div class="spinner-border text-info mb-2" role="status"></div>
                             <div class="text-info fw-bold animate-pulse">AUTOSAVING MATCH DATA...</div>
                         } else {
@@ -427,14 +427,14 @@
 
     @code {
    
-    private GameSession? s;
+    private GameSession? matchSession;
     private string joinCode = "", myIdentity = "", statsTab = "players", errorMessage = "", searchQuery = "", selectedSeries = "", randomNameDisplay = "";
     private string browserId = Guid.NewGuid().ToString();
     private int playersPerTeam = 2, charIdCounter = 1;
     private bool isSpinning = false, showBans = false;
     private MatchResult? selectedMatch;
     private string myTemporaryName = "";
-    private bool IsHost => s?.HostId == browserId;
+    private bool IsHost => matchSession?.HostId == browserId;
 
     
     // Perma Bans
@@ -458,13 +458,13 @@
     private async Task CreateNewRoom() {
         try {
             StateHasChanged();
-            s = SessionService.Create();
-            s.HostId = browserId;
-            s.OnChange += Refresh;
+            matchSession = SessionService.Create();
+            matchSession.HostId = browserId;
+            matchSession.OnChange += Refresh;
 
             try {
                 using var db = await DbFactory.CreateDbContextAsync();
-                s.MatchHistory = await db.Matches
+                matchSession.MatchHistory = await db.Matches
                     .OrderByDescending(m => m.Id)
                     .Take(20)
                     .ToListAsync();
@@ -476,26 +476,26 @@
             }
 
             UpdateUnassignedList();
-            s.Notify();
+            matchSession.Notify();
         }
         catch (Exception ex) {
             errorMessage = "Critical Error: " + ex.Message;
             errorMessage = $"CRASH: {ex.Message}";
-            s.Notify();
+            matchSession.Notify();
         }
     }
 
     private async Task JoinRoom() {
         if (SessionService.Sessions.TryGetValue(joinCode.ToUpper(), out var ex)) { 
-            s = ex; 
-            s.OnChange += Refresh; 
+            matchSession = ex; 
+            matchSession.OnChange += Refresh; 
             errorMessage = ""; 
     
             using var db = await DbFactory.CreateDbContextAsync();
-            s.MatchHistory = await db.Matches.OrderByDescending(m => m.Id).Take(20).ToListAsync();
+            matchSession.MatchHistory = await db.Matches.OrderByDescending(m => m.Id).Take(20).ToListAsync();
         
             // This ensures the joining player sees the current slots
-            s.Notify(); 
+            matchSession.Notify(); 
         }
         else { errorMessage = "Invalid Room Code."; }
     }
@@ -503,10 +503,10 @@
     {
         InvokeAsync(() => {
             // SYNC IDENTITY: Check if I am one of the players in the picking order
-            if (s != null)
+            if (matchSession != null)
             {
-                var me = s.PickingOrder.FirstOrDefault(p => p.ClaimedBySessionId == browserId) 
-                         ?? s.UnassignedPlayers.FirstOrDefault(p => p.ClaimedBySessionId == browserId);
+                var me = matchSession.PickingOrder.FirstOrDefault(p => p.ClaimedBySessionId == browserId) 
+                         ?? matchSession.UnassignedPlayers.FirstOrDefault(p => p.ClaimedBySessionId == browserId);
                 
                 if (me != null) 
                 {
@@ -519,17 +519,17 @@
     private void OnPlayerCountChange(ChangeEventArgs e) { if (int.TryParse(e.Value?.ToString(), out int val)) { playersPerTeam = val; UpdateUnassignedList(); } }
 
     private void UpdateUnassignedList() {
-    if (s == null) return;
-    s.UnassignedPlayers.Clear();
-    for (int i = 0; i < (playersPerTeam * 2); i++) { s.UnassignedPlayers.Add(new Player()); }
-    s.Notify();
+    if (matchSession == null) return;
+    matchSession.UnassignedPlayers.Clear();
+    for (int i = 0; i < (playersPerTeam * 2); i++) { matchSession.UnassignedPlayers.Add(new Player()); }
+    matchSession.Notify();
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && s != null)
+        if (firstRender && matchSession != null)
         {
             // If I refresh the page, find which player belongs to my browser session
-            var myClaimedPlayer = s.UnassignedPlayers.Concat(s.PickingOrder)
+            var myClaimedPlayer = matchSession.UnassignedPlayers.Concat(matchSession.PickingOrder)
                 .FirstOrDefault(x => x.ClaimedBySessionId == browserId);
             if (myClaimedPlayer != null)
             {
@@ -539,18 +539,18 @@
         }
     }
     private async Task WheelSpinTeams() {
-        if (s == null || !IsHost) return;
+        if (matchSession == null || !IsHost) return;
 
         // Validation
-        if (s.UnassignedPlayers.Any(p => string.IsNullOrWhiteSpace(p.Name))) { 
+        if (matchSession.UnassignedPlayers.Any(p => string.IsNullOrWhiteSpace(p.Name))) { 
             errorMessage = "Fill all player names first."; 
             return; 
         }
-        if (s.UnassignedPlayers.Any(p => string.IsNullOrWhiteSpace(p.ClaimedBySessionId))) {
+        if (matchSession.UnassignedPlayers.Any(p => string.IsNullOrWhiteSpace(p.ClaimedBySessionId))) {
             errorMessage = "Everyone must CLAIM a slot before starting!";
             return;
         }
-        if (s.UnassignedPlayers.Any(p => !p.IsLocked)) { 
+        if (matchSession.UnassignedPlayers.Any(p => !p.IsLocked)) { 
             errorMessage = "Everyone must LOCK their names before starting!"; 
             return; 
         }
@@ -559,52 +559,49 @@
         var rng = new Random();
 
         for (int i = 0; i < 15; i++) {
-            randomNameDisplay = s.UnassignedPlayers[rng.Next(s.UnassignedPlayers.Count)].Name;
-            s.Notify(); 
+            randomNameDisplay = matchSession.UnassignedPlayers[rng.Next(matchSession.UnassignedPlayers.Count)].Name;
+            matchSession.Notify(); 
             await Task.Delay(100);
         }
 
-        var shuffled = s.UnassignedPlayers.OrderBy(x => rng.Next()).ToList();
-        s.Team1 = shuffled.Take(playersPerTeam).ToList();
-        s.Team2 = shuffled.Skip(playersPerTeam).ToList();
+        var shuffled = matchSession.UnassignedPlayers.OrderBy(x => rng.Next()).ToList();
+        matchSession.Team1 = shuffled.Take(playersPerTeam).ToList();
+        matchSession.Team2 = shuffled.Skip(playersPerTeam).ToList();
 
-        s.PickingOrder.Clear();
+        matchSession.PickingOrder.Clear();
         for(int i = 0; i < playersPerTeam; i++) { 
-            s.PickingOrder.Add(s.Team1[i]); 
-            s.PickingOrder.Add(s.Team2[i]); 
+            matchSession.PickingOrder.Add(matchSession.Team1[i]); 
+            matchSession.PickingOrder.Add(matchSession.Team2[i]); 
         }
 
-        foreach(var p in s.PickingOrder) { 
-            p.Roster.Clear(); 
-            p.TeamNumber = s.Team1.Contains(p) ? 1 : 2; 
+        foreach(var player in matchSession.PickingOrder) { 
+            player.Roster.Clear(); 
+            player.TeamNumber = matchSession.Team1.Contains(player) ? 1 : 2; 
         }
 
         GenerateBans();
         isSpinning = false; 
-        s.View = "draft"; 
+        matchSession.View = "draft"; 
 
-        // CRITICAL FIX: Every client needs to know who they are. 
-        // We trigger a global notification so clients run their Refresh/Identity check
-        s.Notify(); 
+        matchSession.Notify(); 
     }
 
     private void SelectCharacter(Character chosen) {
         
-        if (s == null) return;
-        var p = s.PickingOrder[s.CurrentPickerIndex];
+        if (matchSession == null) return;
+        var player = matchSession.PickingOrder[matchSession.CurrentPickerIndex];
         errorMessage = "";
      
         
-        // DEBUG: If you're still locked out, check your console logs in the browser
-        if (p.ClaimedBySessionId != browserId) return; 
+        if (player.ClaimedBySessionId != browserId) return; 
 
-        if (p.GetSeriesCount(chosen.Series) >= 2) {
+        if (player.GetSeriesCount(chosen.Series) >= 2) {
             errorMessage = "You cannot pick more than 2 characters from the same series!";
-            s.Notify();
+            matchSession.Notify();
             return;
         }
         
-        var currentTeamList = p.TeamNumber == 1 ? s.Team1 : s.Team2;
+        var currentTeamList = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
 
         // Check if ANY player on this specific team already has a Z-Tier character
         bool teamAlreadyHasZTier = currentTeamList.Any(player => 
@@ -613,44 +610,44 @@
 
         // If the team already locked a Z-Tier and the user tries to draft another, block it
         if (teamAlreadyHasZTier && chosen.Tier == CharacterTier.Z) {
-            errorMessage = $"Team {p.TeamNumber} already has a Z-Tier character!";
-            s.Notify();
+            errorMessage = $"Team {player.TeamNumber} already has a Z-Tier character!";
+            matchSession.Notify();
             return;
         }
         
         
-        p.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++, chosen.Tier));
-        s.CurrentPickerIndex = (s.CurrentPickerIndex + 1) % s.PickingOrder.Count;
+        player.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++, chosen.Tier));
+        matchSession.CurrentPickerIndex = (matchSession.CurrentPickerIndex + 1) % matchSession.PickingOrder.Count;
         
-        if (s.PickingOrder.All(x => x.Roster.Count == 5)) { 
+        if (matchSession.PickingOrder.All(x => x.Roster.Count == 5)) { 
             CheckForRivalry(); 
-            s.View = "battle"; 
+            matchSession.View = "battle"; 
         }
-        s.Notify();
+        matchSession.Notify();
     }
     
     private async Task RecordMatchResult() {
-        if (s == null || s.HistoryRecorded) return;
+        if (matchSession == null || matchSession.HistoryRecorded) return;
 
-        s.HistoryRecorded = true;
+        matchSession.HistoryRecorded = true;
 
         try {
-            int t1TotalLost = s.Team1.Sum(p => p.Roster.Count(c => c.IsLost));
-            int t2TotalLost = s.Team2.Sum(p => p.Roster.Count(c => c.IsLost));
+            int t1TotalLost = matchSession.Team1.Sum(p => p.Roster.Count(c => c.IsLost));
+            int t2TotalLost = matchSession.Team2.Sum(p => p.Roster.Count(c => c.IsLost));
 
             var result = new MatchResult {
-                Team1Key = GetTeamKey(s.Team1),
-                Team2Key = GetTeamKey(s.Team2),
-                Team1Names = s.Team1.Select(p => p.Name).ToList(),
-                Team2Names = s.Team2.Select(p => p.Name).ToList(),
-                Team1Roster = s.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                Team2Roster = s.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
-                BanList = new List<string>(s.CurrentBans),
+                Team1Key = GetTeamKey(matchSession.Team1),
+                Team2Key = GetTeamKey(matchSession.Team2),
+                Team1Names = matchSession.Team1.Select(p => p.Name).ToList(),
+                Team2Names = matchSession.Team2.Select(p => p.Name).ToList(),
+                Team1Roster = matchSession.Team1.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+                Team2Roster = matchSession.Team2.SelectMany(p => p.Roster.Select(c => c.Name)).ToList(),
+                BanList = new List<string>(matchSession.CurrentBans),
             
-                Team1Rounds = s.Team2.Count > 0 ? (t2TotalLost / s.Team2.Count) : 0,
-                Team2Rounds = s.Team1.Count > 0 ? (t1TotalLost / s.Team1.Count) : 0,
+                Team1Rounds = matchSession.Team2.Count > 0 ? (t2TotalLost / matchSession.Team2.Count) : 0,
+                Team2Rounds = matchSession.Team1.Count > 0 ? (t1TotalLost / matchSession.Team1.Count) : 0,
             
-                WinningTeamSide = s.WinningTeamNumber,
+                WinningTeamSide = matchSession.WinningTeamNumber,
                 MatchDate = DateTime.UtcNow
             };
 
@@ -659,62 +656,62 @@
                 db.Matches.Add(result);
                 await db.SaveChangesAsync();
         
-                s.MatchHistory = await db.Matches
+                matchSession.MatchHistory = await db.Matches
                     .OrderByDescending(m => m.Id)
                     .Take(20)
                     .ToListAsync();
             }
     
             errorMessage = "";
-            s.Notify();
+            matchSession.Notify();
         }
         catch (Exception ex) {
-            s.HistoryRecorded = false; 
+            matchSession.HistoryRecorded = false; 
             var innerMsg = ex.InnerException?.Message ?? ex.Message;
             errorMessage = $"Autosave Failed: {innerMsg}";
-            s.Notify();
+            matchSession.Notify();
         }
     }
     
     
     private async Task CheckVictory() {
-        if (s == null) return;
+        if (matchSession == null) return;
 
-        if (s.Team1.All(p => p.Roster.All(c => c.IsLost))) 
+        if (matchSession.Team1.All(player => player.Roster.All(c => c.IsLost))) 
         {
-            s.WinningTeamNumber = 2;
+            matchSession.WinningTeamNumber = 2;
         }
-        else if (s.Team2.All(p => p.Roster.All(c => c.IsLost))) 
+        else if (matchSession.Team2.All(player => player.Roster.All(c => c.IsLost))) 
         {
-            s.WinningTeamNumber = 1;
+            matchSession.WinningTeamNumber = 1;
         }
 
-        if (s.WinningTeamNumber != 0 && !s.HistoryRecorded) 
+        if (matchSession.WinningTeamNumber != 0 && !matchSession.HistoryRecorded) 
         {
             await RecordMatchResult();
         }
     }
 
-    private void ResetGame() { if(s!=null) { s.View = "menu"; s.WinningTeamNumber = 0; s.HistoryRecorded = false; s.Notify(); } }
+    private void ResetGame() { if(matchSession!=null) { matchSession.View = "menu"; matchSession.WinningTeamNumber = 0; matchSession.HistoryRecorded = false; matchSession.Notify(); } }
 
     private void GenerateBans() {
-    if (s == null) return;
+    if (matchSession == null) return;
     var rng = new Random();
-    s.CurrentBans = new List<string>(StaticBans);
+    matchSession.CurrentBans = new List<string>(StaticBans);
     int banCount = (int)(RotatingPool.Count * 0.28);
-    s.CurrentBans.AddRange(RotatingPool.OrderBy(x => rng.Next()).Take(banCount));
-    s.Notify();
+    matchSession.CurrentBans.AddRange(RotatingPool.OrderBy(x => rng.Next()).Take(banCount));
+    matchSession.Notify();
     }
 
     private string GetTeamKey(List<Player> team) => string.Join(", ", team.Select(p => p.Name).OrderBy(n => n));
-    private void OpenMatchDetail(int index) { selectedMatch = s?.MatchHistory[index]; if(s!=null) s.View = "matchDetail"; }
+    private void OpenMatchDetail(int index) { selectedMatch = matchSession?.MatchHistory[index]; if(matchSession!=null) matchSession.View = "matchDetail"; }
 
     private List<PlayerStat> GetPlayerStats() {
     var stats = new Dictionary<string, PlayerStat>();
-    if (s == null) return new();
-    foreach (var m in s.MatchHistory) {
-    var winners = m.WinningTeamSide == 1 ? m.Team1Names : m.Team2Names;
-    var losers = m.WinningTeamSide == 1 ? m.Team2Names : m.Team1Names;
+    if (matchSession == null) return new();
+    foreach (var match in matchSession.MatchHistory) {
+    var winners = match.WinningTeamSide == 1 ? match.Team1Names : match.Team2Names;
+    var losers = match.WinningTeamSide == 1 ? match.Team2Names : match.Team1Names;
     foreach (var n in winners) {
     if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
     stats[n].Wins++; stats[n].CurrentStreak++;
@@ -730,57 +727,57 @@
 
     private List<TeamStat> GetTeamStats() {
     var teamStats = new Dictionary<string, TeamStat>();
-    if (s == null) return new();
-    foreach (var m in s.MatchHistory) {
-    if (!teamStats.ContainsKey(m.Team1Key)) teamStats[m.Team1Key] = new TeamStat { TeamComposition = m.Team1Key };
-    if (!teamStats.ContainsKey(m.Team2Key)) teamStats[m.Team2Key] = new TeamStat { TeamComposition = m.Team2Key };
-    if (m.WinningTeamSide == 1) { teamStats[m.Team1Key].Wins++; teamStats[m.Team2Key].Losses++; }
-    else { teamStats[m.Team2Key].Wins++; teamStats[m.Team1Key].Losses++; }
+    if (matchSession == null) return new();
+    foreach (var match in matchSession.MatchHistory) {
+    if (!teamStats.ContainsKey(match.Team1Key)) teamStats[match.Team1Key] = new TeamStat { TeamComposition = match.Team1Key };
+    if (!teamStats.ContainsKey(match.Team2Key)) teamStats[match.Team2Key] = new TeamStat { TeamComposition = match.Team2Key };
+    if (match.WinningTeamSide == 1) { teamStats[match.Team1Key].Wins++; teamStats[match.Team2Key].Losses++; }
+    else { teamStats[match.Team2Key].Wins++; teamStats[match.Team1Key].Losses++; }
     }
     return teamStats.Values.OrderByDescending(x => x.Wins).ToList();
     }
 
     private void CheckForRivalry() {
-    if (s == null) return;
-    string t1K = GetTeamKey(s.Team1), t2K = GetTeamKey(s.Team2);
-    var h2h = s.MatchHistory.Where(m => (m.Team1Key == t1K && m.Team2Key == t2K) || (m.Team1Key == t2K && m.Team2Key == t1K)).ToList();
+    if (matchSession == null) return;
+    string t1K = GetTeamKey(matchSession.Team1), t2K = GetTeamKey(matchSession.Team2);
+    var h2h = matchSession.MatchHistory.Where(m => (m.Team1Key == t1K && m.Team2Key == t2K) || (m.Team1Key == t2K && m.Team2Key == t1K)).ToList();
     if (h2h.Any()) {
     int t1W = h2h.Count(m => (m.Team1Key == t1K && m.WinningTeamSide == 1) || (m.Team2Key == t1K && m.WinningTeamSide == 2));
-    s.RivalryText = $"{t1W} - {h2h.Count - t1W}";
+    matchSession.RivalryText = $"{t1W} - {h2h.Count - t1W}";
     }
     }
 
     private IEnumerable<Character> GetFilteredCharacters() {
-    var q = CharacterData.MasterList.AsEnumerable();
-    if (!string.IsNullOrEmpty(selectedSeries)) q = q.Where(c => c.Series == selectedSeries);
-    if (!string.IsNullOrWhiteSpace(searchQuery)) q = q.Where(c => c.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || c.Series.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
-    return q.Take(40);
+    var searchedChar = CharacterData.MasterList.AsEnumerable();
+    if (!string.IsNullOrEmpty(selectedSeries)) searchedChar = searchedChar.Where(c => c.Series == selectedSeries);
+    if (!string.IsNullOrWhiteSpace(searchQuery)) searchedChar = searchedChar.Where(c => c.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || c.Series.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+    return searchedChar.Take(40);
     }
 
-    private void InitializeSetup() { if (s != null) { GenerateBans(); s.View = "setup"; UpdateUnassignedList(); s.Notify(); } }
-    private void QuickStartDraft() { if(s == null) CreateNewRoom(); s.Team1 = new List<Player>{ new Player{Name="P1"} }; s.Team2 = new List<Player>{ new Player{Name="P2"} }; s.PickingOrder = new List<Player>{s.Team1[0], s.Team2[0]}; myIdentity = "P1"; s.View = "draft"; s.Notify(); }
-    public void Dispose() { if (s != null) s.OnChange -= Refresh; }
+    private void InitializeSetup() { if (matchSession != null) { GenerateBans(); matchSession.View = "setup"; UpdateUnassignedList(); matchSession.Notify(); } }
+    private void QuickStartDraft() { if(matchSession == null) CreateNewRoom(); matchSession.Team1 = new List<Player>{ new Player{Name="P1"} }; matchSession.Team2 = new List<Player>{ new Player{Name="P2"} }; matchSession.PickingOrder = new List<Player>{matchSession.Team1[0], matchSession.Team2[0]}; myIdentity = "P1"; matchSession.View = "draft"; matchSession.Notify(); }
+    public void Dispose() { if (matchSession != null) matchSession.OnChange -= Refresh; }
     
     
-    private void ClaimSlot(Player p) {
-        p.ClaimedBySessionId = browserId;
+    private void ClaimSlot(Player player) {
+        player.ClaimedBySessionId = browserId;
         myTemporaryName = ""; // Clear buffer for new entry
-        s.Notify();
+        matchSession.Notify();
     }
 
-    private void LockMyName(Player p) {
+    private void LockMyName(Player player) {
         if (string.IsNullOrWhiteSpace(myTemporaryName)) return;
     
-        p.Name = myTemporaryName;
-        p.IsLocked = true;
-        myIdentity = p.Name; // Sync global identity
-        s.Notify();
+        player.Name = myTemporaryName;
+        player.IsLocked = true;
+        myIdentity = player.Name; // Sync global identity
+        matchSession.Notify();
     }
 
-    private void UnlockName(Player p) {
-        p.IsLocked = false;
-        myTemporaryName = p.Name; // Bring the name back to the buffer
-        s.Notify();
+    private void UnlockName(Player player) {
+        player.IsLocked = false;
+        myTemporaryName = player.Name; // Bring the name back to the buffer
+        matchSession.Notify();
     }
     }
 
