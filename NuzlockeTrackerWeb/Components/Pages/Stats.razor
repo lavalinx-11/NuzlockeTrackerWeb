@@ -247,8 +247,40 @@
 
     private List<TeamCompositionRecord> RunTeamMathEngine(List<MatchResult> history)
     {
-        // Paste your exact GetTeamStats() logic here.
-        return new List<TeamCompositionRecord>();
+        var teamMap = new Dictionary<string, TeamCompositionRecord>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var match in history)
+        {
+            if (match.Team1Names == null || match.Team2Names == null || match.Team1Names.Count == 0 || match.Team2Names.Count == 0) 
+                continue;
+
+            // Sort names alphabetically so "Alex & Bob" and "Bob & Alex" count as the same squad
+            string team1Key = string.Join(" & ", match.Team1Names.OrderBy(n => n));
+            string team2Key = string.Join(" & ", match.Team2Names.OrderBy(n => n));
+
+            // Process Team 1
+            if (!teamMap.TryGetValue(team1Key, out var t1Entry))
+            {
+                t1Entry = new TeamCompositionRecord { TeamComposition = team1Key };
+                teamMap[team1Key] = t1Entry;
+            }
+            if (match.WinningTeamSide == 1) t1Entry.Wins++;
+            else t1Entry.Losses++;
+
+            // Process Team 2
+            if (!teamMap.TryGetValue(team2Key, out var t2Entry))
+            {
+                t2Entry = new TeamCompositionRecord { TeamComposition = team2Key };
+                teamMap[team2Key] = t2Entry;
+            }
+            if (match.WinningTeamSide == 2) t2Entry.Wins++;
+            else t2Entry.Losses++;
+        }
+
+        return teamMap.Values
+            .OrderByDescending(t => t.Wins)
+            .ThenByDescending(t => t.Ratio)
+            .ToList();
     }
 
     // --- Clean, Readable Data Transfer Objects (DTOs) ---
