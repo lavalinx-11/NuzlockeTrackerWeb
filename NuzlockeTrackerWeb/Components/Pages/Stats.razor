@@ -97,9 +97,63 @@
     // --- Cleaned up logic loops from your old page ---
     private List<PlayerLeaderboardEntry> RunPlayerMathEngine(List<MatchResult> history)
     {
-        // Paste the exact business math inside your original GetPlayerStats() loop here.
-        // Just make sure it processes the passed-in "history" parameter instead of "matchSession.MatchHistory"!
-        return new List<PlayerLeaderboardEntry>();
+        // 1. Temporary dictionary to track players as we loop through matches
+        var playerMap = new Dictionary<string, PlayerLeaderboardEntry>(StringComparer.OrdinalIgnoreCase);
+
+        // 2. Process matches from oldest to newest (helpful if you calculate consecutive streaks later)
+        foreach (var match in history.AsEnumerable().Reverse())
+        {
+            // Safe check: skip processing if names lists are null
+            if (match.Team1Names == null || match.Team2Names == null) continue;
+
+            // Process every player on Team 1
+            foreach (var name in match.Team1Names)
+            {
+                if (!playerMap.TryGetValue(name, out var entry))
+                {
+                    entry = new PlayerLeaderboardEntry { PlayerName = name };
+                    playerMap[name] = entry;
+                }
+
+                if (match.WinningTeamSide == 1)
+                {
+                    entry.Wins++;
+                    entry.CurrentStreak++;
+                }
+                else
+                {
+                    entry.Losses++;
+                    entry.CurrentStreak = 0; // Streak broken
+                }
+            }
+
+            // Process every player on Team 2
+            foreach (var name in match.Team2Names)
+            {
+                if (!playerMap.TryGetValue(name, out var entry))
+                {
+                    entry = new PlayerLeaderboardEntry { PlayerName = name };
+                    playerMap[name] = entry;
+                }
+
+                if (match.WinningTeamSide == 2)
+                {
+                    entry.Wins++;
+                    entry.CurrentStreak++;
+                }
+                else
+                {
+                    entry.Losses++;
+                    entry.CurrentStreak = 0; // Streak broken
+                }
+            }
+        }
+
+        // 3. Return the results ordered by total wins descending
+        return playerMap.Values
+            .OrderByDescending(p => p.Wins)
+            .ThenByDescending(p => p.Ratio)
+            .ToList();
     }
 
     private List<TeamCompositionRecord> RunTeamMathEngine(List<MatchResult> history)
