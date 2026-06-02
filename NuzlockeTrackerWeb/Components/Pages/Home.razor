@@ -11,7 +11,7 @@
     @* --- SECTION: DEBUG NAVIGATION --- *@
     <div class="d-flex justify-content-center gap-2 mb-4 bg-dark p-2 rounded shadow-sm sticky-top" style="z-index: 1000;">
         <button class="btn btn-sm btn-outline-secondary" @onclick='() => { if(matchSession!=null) matchSession.View = "menu"; }'>Main Menu</button>
-        <a class="btn btn-sm btn-outline-info" href="/stats" target="_blank">🏆 Hall of Fame</a>    </div>
+        </div>
 
     <div class="container py-4">
         @if (matchSession == null) {
@@ -44,7 +44,7 @@
                     <small class="text-uppercase fw-bold">Waiting for Host...</small>
                 </div>
                 }
-                <a class="btn btn-outline-info btn-lg px-5 shadow" href="/stats" target="_blank">View Stats</a>     
+                <a class="btn btn-outline-info btn-lg px-5 shadow" href="/stats">View Stats</a>
                 </div>
         </div>
         }
