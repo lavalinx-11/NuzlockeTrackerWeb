@@ -15,8 +15,8 @@
             <button class="btn btn-outline-secondary mb-3" @onclick="() => _activeDetailedMatch = null"> ← Back to Match History </button>
             <div class="row align-items-center">
             <h3>Match Details</h3>
-        <p>Played on: </p>
-        <p>@_activeDetailedMatch.MatchDate.ToLocalTime()</p>
+            <p class="mb-1 text-white-50">Date Played:</p>
+            <p class="text-warning fw-bold">@_activeDetailedMatch.MatchDate.ToString("yyyy-MM-dd")</p>
             <div class="col-5">
                         @foreach(var name in _activeDetailedMatch.Team1Names) {
                             <h3 class="badge bg-info text-dark fs-4 m-1">@name</h3>
