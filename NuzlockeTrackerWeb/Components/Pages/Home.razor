@@ -53,7 +53,7 @@
         @* --- SECTION: STATISTICS (HALL OF FAME) --- *@
         <div class="text-center mb-4">
             <h2 class="text-black fw-bold">MATCH HISTORY</h2>
-            <p class="text-black-50">Player And Team Match Data</p>
+            <p class="text-black-50 fw-bold">Player And Team Match Data</p>
         </div>
 
         <div class="row g-4">
@@ -215,10 +215,11 @@
                         <div class="input-group">
                             @if (isClaimedByMe && !p.IsLocked) {
                                 <input @bind="myTemporaryName" 
-                                       class="form-control bg-white text-white border-info shadow-glow-info" 
+                                       class="form-control bg-dark text-white border-info shadow-glow-info" 
                                        placeholder="Your Name..." />
                                 <button class="btn btn-info" @onclick="() => LockMyName(p)">LOCK</button>
                             }
+                            
                             else {
                                 <input value="@(string.IsNullOrEmpty(p.Name) ? "Empty Slot" : p.Name)" 
                                        class="form-control bg-dark text-white border-secondary" 
