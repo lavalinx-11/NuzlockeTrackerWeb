@@ -23,7 +23,7 @@ public static class CharacterData
         new Character("Lucci","One Piece", 16, CharacterTier.Null),
         new Character("Aokiji","One Piece", 17, CharacterTier.Null),
         new Character("Arlong","One Piece", 18, CharacterTier.Null),
-        new Character("TS Law","One Piece", 19, CharacterTier.Null),
+        new Character("Wano Law","One Piece", 19, CharacterTier.Z),
         new Character("Shanks","One Piece", 20, CharacterTier.Null),
         new Character("Whitebeard","One Piece", 21, CharacterTier.Null),
         new Character("Namek Goku","Dragon Ball", 22, CharacterTier.Null),
@@ -190,9 +190,8 @@ public static class CharacterData
         new Character("Jogo","JJK", 183, CharacterTier.Null),
         new Character("Edward Elric","Misc", 184, CharacterTier.Null),
         new Character("Boa Hancock","One Piece", 185, CharacterTier.Null),
-        new Character("Wano Law","One Piece", 186, CharacterTier.Z),
-        new Character("2B","Anime?", 187, CharacterTier.Null),
-        new Character("Shadow Dummy","Anime?", 188, CharacterTier.Null),
-        new Character("Raiden 2","MGS", 189, CharacterTier.Null)
+        new Character("2B","Anime?", 186, CharacterTier.Null),
+        new Character("Shadow Dummy","Anime?", 187, CharacterTier.Null),
+        new Character("Raiden 2","MGS", 188, CharacterTier.Null)
     };
 }
