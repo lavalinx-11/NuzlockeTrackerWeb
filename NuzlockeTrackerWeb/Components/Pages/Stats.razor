@@ -4,7 +4,7 @@
 @using Microsoft.EntityFrameworkCore
 @using NuzlockeTrackerWeb.Components.GameData
 @inject IDbContextFactory<AppDbContext> DbFactory
-@inject NavigationManager NavManager
+//@inject NavigationManager NavManager
 
 
  <div class="container py-4">
@@ -68,6 +68,8 @@
                                     @onclick='() => _currentStatsCategory = "players"'>👤 Players</button>
                             <button class="btn @(_currentStatsCategory == "teams" ? "btn-info" : "btn-dark")" 
                                     @onclick='() => _currentStatsCategory = "teams"'>👥 Teams</button>
+                            <button class="btn @(_currentStatsCategory == "characters" ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => _currentStatsCategory = "characters"'>👥 Characters</button>
                         </div>
                     </div>
 
@@ -101,6 +103,21 @@
                                 }
                                 </tbody>
                             </table>
+                        } else {
+                        @* --- NEW CHARACTER WIN RATE TABLE --- *@
+                        <table class="table table-dark table-hover mb-0 text-center reveal-card">
+                            <thead><tr><th>Character Name</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
+                            <tbody>
+                            @foreach (var hero in _characterRecords) {
+                                <tr>
+                                    <td class="fw-bold text-white">@hero.CharacterName</td>
+                                    <td class="text-info">@hero.Wins</td>
+                                    <td class="text-danger">@hero.Losses</td>
+                                    <td class="fw-bold text-warning">@hero.Ratio%</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
                         }
                     </div>
                 </div>
@@ -128,7 +145,7 @@
                         <div class="list-group list-group-flush">
                             @for (int i = _historicalMatches.Count - 1; i >= 0; i--) {
                                 var match = _historicalMatches[i];
-                                var idx = i;
+                                //var idx = i;
                                 <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3"@onclick="() => _activeDetailedMatch = match">
         <div class="row align-items-center">
             <div class="col-4">
@@ -166,22 +183,21 @@
     
     private List<PlayerLeaderboardEntry> _playerRankings = new();
     private List<TeamCompositionRecord> _teamRecords = new();
+    private List<CharacterWinRateRecord> _characterRecords = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Establish a secure, dedicated connection thread to your DB
         using var db = await DbFactory.CreateDbContextAsync();
         
-        // 2. Fetch the data buckets directly out of EF Core
         var matchesFromDatabase = await db.Matches
             .OrderByDescending(m => m.Id)
-            .Take(50) // Grab 50 records to give your history page some depth
+            .Take(50) 
             .ToListAsync();
 
-        // 3. Populate our local storage variables safely
         _historicalMatches = matchesFromDatabase;
         _playerRankings = RunPlayerMathEngine(_historicalMatches);
         _teamRecords = RunTeamMathEngine(_historicalMatches);
+        _characterRecords = RunCharacterMathEngine(_historicalMatches); 
     }
 
     // --- Cleaned up logic loops from your old page ---
@@ -301,5 +317,61 @@
         public int Losses { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
+    
+    private List<CharacterWinRateRecord> RunCharacterMathEngine(List<MatchResult> history)
+    {
+        var charMap = new Dictionary<string, CharacterWinRateRecord>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var match in history)
+        {
+            // Guard check against empty arrays or null records
+            if (match.Team1Roster == null || match.Team2Roster == null) continue;
+
+            // 1. Process Team 1 Characters
+            foreach (var character in match.Team1Roster)
+            {
+                if (string.IsNullOrWhiteSpace(character)) continue;
+
+                if (!charMap.TryGetValue(character, out var record))
+                {
+                    record = new CharacterWinRateRecord { CharacterName = character };
+                    charMap[character] = record;
+                }
+
+                if (match.WinningTeamSide == 1) record.Wins++;
+                else record.Losses++;
+            }
+
+            // 2. Process Team 2 Characters
+            foreach (var character in match.Team2Roster)
+            {
+                if (string.IsNullOrWhiteSpace(character)) continue;
+
+                if (!charMap.TryGetValue(character, out var record))
+                {
+                    record = new CharacterWinRateRecord { CharacterName = character };
+                    charMap[character] = record;
+                }
+
+                if (match.WinningTeamSide == 2) record.Wins++;
+                else record.Losses++;
+            }
+        }
+
+        // Sort by highest overall Win Rate, then total Wins for tie-breakers
+        return charMap.Values
+            .OrderByDescending(c => c.Ratio)
+            .ThenByDescending(c => c.Wins)
+            .ToList();
+    }
+
+// DTO Class representation for clean rendering
+    public class CharacterWinRateRecord
+    {
+        public string CharacterName { get; set; } = "";
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
+    }
  }
- </div>
+</div>
