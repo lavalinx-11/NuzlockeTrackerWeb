@@ -461,7 +461,7 @@
         }
 
         // Z tier per player
-        if (player.Roster.Any(character => character.Tier == CharacterTier.Z))
+        if (player.GetZTier(chosen.Tier) == 1)
         {
             errorMessage = $"You Cannot Pick More Than 1 Z-Tier Character!";
             matchSession.Notify();

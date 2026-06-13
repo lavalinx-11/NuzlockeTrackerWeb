@@ -33,10 +33,9 @@ public class Player
 
     public int GetZTier(CharacterTier tier)
     {
-        if (tier == CharacterTier.Z)
-        {
-            return 1;
-        }
-        return 0;
+        return Roster.Count(c => c.Tier == tier);
     }
+    
+       
+    
 }
