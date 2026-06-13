@@ -460,15 +460,23 @@
             return;
         }
 
+
+        int currentSTiers = player.GetSTiers();
+        int currentZtiers = player.GetZTier();
+
+        bool choosingZTier = chosen.Tier == CharacterTier.Z;
+        bool choosingSTier = chosen.Tier == CharacterTier.S;
+        
+        
         // Z tier per player
-        if (player.GetZTier(chosen.Tier) == 1)
+        if (currentZtiers == 1 && choosingZTier)
         {
             errorMessage = $"You Cannot Pick More Than 1 Z-Tier Character!";
             matchSession.Notify();
             return;
         }
         
-        if (player.GetSTiers(chosen.Tier) >= 2){
+        if (currentSTiers >= 2 && choosingSTier){
             errorMessage = "You Cannot Pick More Than 2 S-Tier Characters!";
             matchSession.Notify();
             return;
