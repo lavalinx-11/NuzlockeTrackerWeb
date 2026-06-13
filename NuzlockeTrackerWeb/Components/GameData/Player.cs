@@ -26,6 +26,11 @@ public class Player
         return Roster.Count(c => c.Series.Equals(seriesName, StringComparison.OrdinalIgnoreCase));
     }
 
+    public int GetSTiers(CharacterTier tier)
+    {
+        return Roster.Count(c => c.Tier == tier);
+    }
+
     public int GetZTier(CharacterTier tier)
     {
         if (tier == CharacterTier.Z)

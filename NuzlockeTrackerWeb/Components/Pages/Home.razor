@@ -173,6 +173,8 @@
             </div>
         </div>
 
+        
+        // Search Bar For Characters
         <div class="mt-4 p-4 bg-dark rounded border border-secondary shadow">
             <div class="row g-2 mb-3">
                 <div class="col-md-4">
@@ -453,12 +455,27 @@
         if (player.ClaimedBySessionId != browserId) return; 
 
         if (player.GetSeriesCount(chosen.Series) >= 2) {
-            errorMessage = "You cannot pick more than 2 characters from the same series!";
+            errorMessage = "You Cannot Pick More Than 2 Characters From The Same Series!";
+            matchSession.Notify();
+            return;
+        }
+
+        // Z tier per player
+        if (player.Roster.Any(character => character.Tier == CharacterTier.Z))
+        {
+            errorMessage = $"You Cannot Pick More Than 1 Z-Tier Character!";
             matchSession.Notify();
             return;
         }
         
-        var currentTeamList = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
+        if (player.GetSTiers(chosen.Tier) >= 2){
+            errorMessage = "You Cannot Pick More Than 2 S-Tier Characters!";
+            matchSession.Notify();
+            return;
+        }
+        
+        // Z tier per team
+        /*var currentTeamList = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
 
         // Check if ANY player on this specific team already has a Z-Tier character
         bool teamAlreadyHasZTier = currentTeamList.Any(player => 
@@ -470,7 +487,7 @@
             errorMessage = $"Team {player.TeamNumber} already has a Z-Tier character!";
             matchSession.Notify();
             return;
-        }
+        }*/
         
         
         player.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++, chosen.Tier));

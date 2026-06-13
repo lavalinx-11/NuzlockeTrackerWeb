@@ -10,13 +10,14 @@
  <div class="container py-4">
     @* The HTML UI checks our renamed variables to decide what layout to show *@
     @if (_activeDetailedMatch != null)
+    
     {
         <div class="card bg-dark text-light border-secondary p-4">
             <button class="btn btn-outline-secondary mb-3" @onclick="() => _activeDetailedMatch = null"> ← Back to Match History </button>
             <div class="row align-items-center">
             <h3>Match Details</h3>
             <p class="mb-1 text-white-50">Date Played:</p>
-            <p class="text-warning fw-bold">@_activeDetailedMatch.MatchDate.ToString("yyyy-MM-dd")</p>
+            <p class="text-warning fw-bold">@_activeDetailedMatch.MatchDate.ToString("yyyy-mm-dd")</p>
             <div class="col-5">
                         @foreach(var name in _activeDetailedMatch.Team1Names) {
                             <h3 class="badge bg-info text-dark fs-4 m-1">@name</h3>
@@ -50,8 +51,8 @@
                 </div>
             </div>
         </div>
- 
     }
+    
     else
     {
         <div class="text-center mb-4">

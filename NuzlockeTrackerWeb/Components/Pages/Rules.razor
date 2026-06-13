@@ -1,6 +1,147 @@
 @page "/Rules"
-<h1 class="text-black">The Rules To The ABA Nuzlocke</h1>
 
-@code {
-    
-}
+<div class="container py-5">
+    @* --- CUSTOM LOCALIZED VISUAL LAYER --- *@
+    <style>
+        .rules-body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #0b0c10;
+        }
+        .text-glow-orange {
+            color: #ffc107;
+            text-shadow: 0 0 15px rgba(255, 193, 7, 0.4);
+            font-family: 'Arial Black', Gadget, sans-serif;
+            letter-spacing: 1px;
+        }
+        .rule-card {
+            background-color: #12141c !important;
+            border: 1px solid #2d3142 !important;
+            transition: border-color 0.25s ease;
+        }
+        .rule-card:hover {
+            border-color: #0dcaf0 !important;
+        }
+        .badge-fixed {
+            min-width: 90px;
+            text-align: center;
+        }
+        .list-group-item-dark {
+            background-color: #1a1d29 !important;
+            border-color: #2d3142 !important;
+            color: #e3e3e3 !important;
+        }
+    </style>
+
+    <div class="rules-body p-4 rounded border border-secondary shadow-lg">
+        @* --- HEADER BAR --- *@
+        <div class="text-center mb-5">
+            <h1 class="text-glow-orange display-4 fw-black text-uppercase">The ABA Nuzlocke Rules</h1>
+            <p class="text-white-50 fw-bold">Standard Competitive Parameters & Permadeath Operational Protocols</p>
+            <hr class="border-warning opacity-25 w-50 mx-auto" />
+        </div>
+
+        <div class="row g-4">
+            @* --- COLUMN 1: TEAM DRAFT & LOCKS --- *@
+            <div class="col-md-6">
+                <div class="card rule-card h-100 text-light shadow">
+                    <div class="card-header bg-black border-bottom border-info py-3">
+                        <h5 class="mb-0 text-info fw-bold">👥 1. Roster & Squad Drafting</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column gap-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="badge bg-info text-dark p-2 fs-6 badge-fixed">Draft Size</span>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">5 Characters Per Player</h6>
+                                <p class="text-white-50 small mb-0">Each participant drafts a main operational reserve pool consisting of exactly 5 legal fighters.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="badge bg-info text-dark p-2 fs-6 badge-fixed">Exclusivity</span>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">Unique Character Locks</h6>
+                                <p class="text-white-50 small mb-0">Characters are strictly locked to a single individual. Two players cannot hold the same character (e.g., identity duplicates like Alucard are banned across active pools).</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="badge bg-warning text-dark p-2 fs-6 badge-fixed">Roster Cap</span>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">Maximum Duplicates (Cap: 2)</h6>
+                                <p class="text-white-50 small mb-0">Maximum of 2 variant characters from the same series roster or family layout (e.g., you are barred from running all 3 Gokus simultaneously).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* --- COLUMN 2: MATCH FORMAT & OPERATIONS --- *@
+            <div class="col-md-6">
+                <div class="card rule-card h-100 text-light shadow">
+                    <div class="card-header bg-black border-bottom border-danger py-3">
+                        <h5 class="mb-0 text-danger fw-bold">⚔️ 2. Match Execution & Flow</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column gap-3">
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="badge bg-danger p-2 fs-6 badge-fixed">Format</span>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">Locked Squad Structures</h6>
+                                <p class="text-white-50 small mb-0">Strictly 2 Teams only. Matches must be run in standard format variations of either 3v3 or 2v2 layouts.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="badge bg-danger p-2 fs-6 badge-fixed">Deployment</span>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">Randomized Team Selection</h6>
+                                <p class="text-white-50 small mb-0">Initial active deployment pairings are generated at random to prevent strategic composition scouting counters.</p>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-start gap-3">
+                            <span class="badge bg-secondary p-2 fs-6 badge-fixed">Victory</span>
+                            <div>
+                                <h6 class="mb-1 text-white fw-bold">Last Team Standing</h6>
+                                <p class="text-white-50 small mb-0">Eliminate the opposition's entire reserve pool. The last remaining player with operational characters claims victory.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* --- LOWER SECTION: THE PERMADEATH MECHANIC --- *@
+            <div class="col-12">
+                <div class="card border border-danger shadow bg-black text-light">
+                    <div class="card-header bg-danger text-white py-3">
+                        <h4 class="mb-0 fw-bold text-center text-uppercase font-monospace">⚠️ Core Nuzlocke Permadeath Clause</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush rounded-bottom">
+                            <div class="list-group-item list-group-item-dark p-4 d-flex gap-3 align-items-center">
+                                <span class="fs-1 text-danger px-2">💀</span>
+                                <div>
+                                    <h5 class="text-danger fw-bold mb-1">Round Loss = Character Death</h5>
+                                    <p class="mb-0 text-white-50">On an individual round loss, the specific character utilized during that round is instantly killed, permanently locked, and wiped from your available selection pool for the duration of the match.</p>
+                                </div>
+                            </div>
+                            <div class="list-group-item list-group-item-dark p-4 d-flex gap-3 align-items-center">
+                                <span class="fs-1 text-success px-2">🛡️</span>
+                                <div>
+                                    <h5 class="text-success fw-bold mb-1">Round Victory = Roster Survival</h5>
+                                    <p class="mb-0 text-white-50">On a round victory, you successfully retain ownership rights to that character. They return safely to your active bench selection pool.</p>
+                                </div>
+                            </div>
+                            <div class="list-group-item list-group-item-dark p-4 d-flex gap-3 align-items-center">
+                                <span class="fs-1 text-warning px-2">🚫</span>
+                                <div>
+                                    <h5 class="text-warning fw-bold mb-1">Mid-Round Intermission Locking</h5>
+                                    <p class="mb-0 text-white-50">You are strictly forbidden from manual character substitution hot-swaps in the immediate intermission intervals between individual rounds.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
