@@ -4,7 +4,7 @@
 @using Microsoft.EntityFrameworkCore
 @using NuzlockeTrackerWeb.Components.GameData
 @inject IDbContextFactory<AppDbContext> DbFactory
-//@inject NavigationManager NavManager
+@inject NavigationManager NavManager
 
 
  <div class="container py-4">
@@ -145,7 +145,7 @@
                         <div class="list-group list-group-flush">
                             @for (int i = _historicalMatches.Count - 1; i >= 0; i--) {
                                 var match = _historicalMatches[i];
-                                //var idx = i;
+                                var idx = i;
                                 <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3"@onclick="() => _activeDetailedMatch = match">
         <div class="row align-items-center">
             <div class="col-4">
