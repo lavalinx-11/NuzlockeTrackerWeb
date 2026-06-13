@@ -112,7 +112,14 @@
     else if (_currentStatsCategory == "characters") 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
-            <thead><tr><th>Character Name</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
+            <thead>
+            <tr>
+                <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("name")'>Character Name @GetSortArrow("name")</th>
+                <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("wins")'>Wins @GetSortArrow("wins")</th>
+                <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("losses")'>Losses @GetSortArrow("losses")</th>
+                <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("ratio")'>Win Rate @GetSortArrow("ratio")</th>
+            </tr>
+            </thead>
             <tbody>
             @foreach (var hero in _characterRecords) {
                 <tr>
@@ -121,6 +128,7 @@
                     <td class="text-danger">@hero.Losses</td>
                     <td class="fw-bold text-warning">@hero.Ratio%</td>
                 </tr>
+            }
             }
             </tbody>
         </table>
@@ -183,7 +191,10 @@
         
     }
     
-@code {
+    @code {
+        private string _activeCharSortColumn = "ratio"; 
+        private bool _isCharSortDescending = true;
+        
     private List<MatchResult> _historicalMatches = new();
     private MatchResult? _activeDetailedMatch = null;
     private string _currentStatsCategory = "players"; // Replaces "statsTab"
@@ -379,6 +390,33 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
+    }
+    private void SortCharacters(string columnName)
+    {
+        if (_activeCharSortColumn == columnName)
+        {
+            // Toggle direction if clicking the same column again
+            _isCharSortDescending = !_isCharSortDescending;
+        }
+        else
+        {
+            _activeCharSortColumn = columnName;
+            _isCharSortDescending = true; // Default to highest values first
+        }
+
+        _characterRecords = columnName switch
+        {
+            "name" => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.CharacterName).ToList() : _characterRecords.OrderBy(c => c.CharacterName).ToList(),
+            "wins" => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.Wins).ToList() : _characterRecords.OrderBy(c => c.Wins).ToList(),
+            "losses" => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.Losses).ToList() : _characterRecords.OrderBy(c => c.Losses).ToList(),
+            "ratio" or _ => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.Ratio).ToList() : _characterRecords.OrderBy(c => c.Ratio).ToList()
+        };
+    }
+
+    private string GetSortArrow(string columnName)
+    {
+        if (_activeCharSortColumn != columnName) return "";
+        return _isCharSortDescending ? "▼" : "▲";
     }
  }
 </div>
