@@ -73,53 +73,60 @@
                         </div>
                     </div>
 
-                    <div class="card-body p-0">
-                        @if (_currentStatsCategory == "players") {
-                            <table class="table table-dark table-hover mb-0 text-center reveal-card">
-                                <thead><tr><th>Player</th><th>W - L</th><th>Streak</th><th>Ratio</th></tr></thead>
-                                <tbody>
-                                @foreach (var stat in _playerRankings) {
-                                    <tr>
-                                        <td class="fw-bold">@stat.PlayerName</td>
-                                        <td><span class="text-info">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
-                                        <td>
-                                            @if (stat.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @stat.CurrentStreak</span> }
-                                            else { <span class="text-white">@stat.CurrentStreak</span> }
-                                        </td>
-                                        <td class="fw-bold text-info">@stat.Ratio%</td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </table>
-                        } else {
-                            <table class="table table-dark table-hover mb-0 text-center reveal-card">
-                                <thead><tr><th>Squad Composition</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
-                                <tbody>
-                                @foreach (var team in _teamRecords) {
-                                    <tr>
-                                        <td class="fw-bold text-warning">@team.TeamComposition</td>
-                                        <td class="text-info">@team.Wins</td><td class="text-danger">@team.Losses</td><td class="text-info">@team.Ratio%</td>
-                                    </tr>
-                                }
-                                </tbody>
-                            </table>
-                        } else {
-                        @* --- NEW CHARACTER WIN RATE TABLE --- *@
-                        <table class="table table-dark table-hover mb-0 text-center reveal-card">
-                            <thead><tr><th>Character Name</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
-                            <tbody>
-                            @foreach (var hero in _characterRecords) {
-                                <tr>
-                                    <td class="fw-bold text-white">@hero.CharacterName</td>
-                                    <td class="text-info">@hero.Wins</td>
-                                    <td class="text-danger">@hero.Losses</td>
-                                    <td class="fw-bold text-warning">@hero.Ratio%</td>
-                                </tr>
-                            }
-                            </tbody>
-                        </table>
-                        }
-                    </div>
+                   <div class="card-body p-0">
+    @if (_currentStatsCategory == "players") 
+    {
+        <table class="table table-dark table-hover mb-0 text-center reveal-card">
+            <thead><tr><th>Player</th><th>W - L</th><th>Streak</th><th>Ratio</th></tr></thead>
+            <tbody>
+            @foreach (var stat in _playerRankings) {
+                <tr>
+                    <td class="fw-bold">@stat.PlayerName</td>
+                    <td><span class="text-info">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
+                    <td>
+                        @if (stat.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @stat.CurrentStreak</span> }
+                        else { <span class="text-white">@stat.CurrentStreak</span> }
+                    </td>
+                    <td class="fw-bold text-info">@stat.Ratio%</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    } 
+    else if (_currentStatsCategory == "teams") 
+    {
+        <table class="table table-dark table-hover mb-0 text-center reveal-card">
+            <thead><tr><th>Squad Composition</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
+            <tbody>
+            @foreach (var team in _teamRecords) {
+                <tr>
+                    <td class="fw-bold text-warning">@team.TeamComposition</td>
+                    <td class="text-info">@team.Wins</td>
+                    <td class="text-danger">@team.Losses</td>
+                    <td class="text-info">@team.Ratio%</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    } 
+    else if (_currentStatsCategory == "characters") 
+    {
+        <table class="table table-dark table-hover mb-0 text-center reveal-card">
+            <thead><tr><th>Character Name</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
+            <tbody>
+            @foreach (var hero in _characterRecords) {
+                <tr>
+                    <td class="fw-bold text-white">@hero.CharacterName</td>
+                    <td class="text-info">@hero.Wins</td>
+                    <td class="text-danger">@hero.Losses</td>
+                    <td class="fw-bold text-warning">@hero.Ratio%</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+                   </div>
+                    
                 </div>
             </div>
 
