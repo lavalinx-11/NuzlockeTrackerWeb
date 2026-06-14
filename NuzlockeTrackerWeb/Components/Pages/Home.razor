@@ -15,7 +15,7 @@
 
     <div class="container py-4">
         @if (matchSession == null) {
-        @* --- SECTION: MULTIPLAYER ENTRY (JOIN LOBBY) --- *@
+        @* --- SECTION: JOIN LOBBY --- *@
         <div class="text-center mt-5 reveal-card">
             <h1 class="display-4 fw-bold text-primary">ABA NUZLOCKE</h1>
             <div class="card bg-dark border-primary p-4 mt-4 mx-auto" style="max-width: 400px;">
@@ -49,6 +49,7 @@
         </div>
         }
        
+      @* --- Room Setup --- *@
         else if (matchSession.View == "setup") {
         <h3 class="text-light mb-4">Room Setup</h3>
         <div class="card bg-dark text-light p-4 shadow border-secondary">
@@ -61,32 +62,34 @@
                 @if(!IsHost){ <small class="text-muted">Only the host can change team size.</small> }
             </div>
 
+            
+            @* --- Player Slot Locking --- *@
             <h5 class="mb-3">Claim a Slot & Enter Name:</h5>
             <div class="row g-3">
-                @foreach (var p in matchSession.UnassignedPlayers) {
-                    bool isLocked = p.IsLocked || (!string.IsNullOrEmpty(p.ClaimedBySessionId) && p.ClaimedBySessionId != browserId);
-                    bool isClaimedByMe = p.ClaimedBySessionId == browserId;
+                @foreach (var user in matchSession.UnassignedPlayers) {
+                    bool isLocked = user.IsLocked || (!string.IsNullOrEmpty(user.ClaimedBySessionId) && user.ClaimedBySessionId != browserId);
+                    bool isClaimedByMe = user.ClaimedBySessionId == browserId;
                     bool iAlreadyHaveAClaim = matchSession.UnassignedPlayers.Any(other => other.ClaimedBySessionId == browserId);
 
                     <div class="col-md-4">
                         <div class="input-group">
-                            @if (isClaimedByMe && !p.IsLocked) {
+                            @if (isClaimedByMe && !user.IsLocked) {
                                 <input @bind="myTemporaryName" 
                                        class="form-control bg-dark text-white border-info shadow-glow-info" 
                                        placeholder="Your Name..." />
-                                <button class="btn btn-info" @onclick="() => LockMyName(p)">LOCK</button>
+                                <button class="btn btn-info" @onclick="() => LockMyName(user)">LOCK</button>
                             }
                             
                             else {
-                                <input value="@(string.IsNullOrEmpty(p.Name) ? "Empty Slot" : p.Name)" 
+                                <input value="@(string.IsNullOrEmpty(user.Name) ? "Empty Slot" : user.Name)" 
                                        class="form-control bg-dark text-white border-secondary" 
                                        disabled />
                 
                                 @if (!iAlreadyHaveAClaim && !isLocked) {
-                                    <button class="btn btn-outline-info" @onclick="() => ClaimSlot(p)">CLAIM</button>
+                                    <button class="btn btn-outline-info" @onclick="() => ClaimSlot(user)">CLAIM</button>
                                 }
-                                else if (isClaimedByMe && p.IsLocked) {
-                                    <button class="btn btn-outline-warning" @onclick="() => UnlockName(p)">EDIT</button>
+                                else if (isClaimedByMe && user.IsLocked) {
+                                    <button class="btn btn-outline-warning" @onclick="() => UnlockName(user)">EDIT</button>
                                 }
                             }
                         </div>
@@ -94,10 +97,14 @@
                 }
             </div>
 
+            
+            @* --- Team Randomizer Button --- *@
+            
             <div class="mt-5 text-center">
                 @if (isSpinning) {
                 <div class="p-4 border border-warning rounded bg-black">
-                    <h2 class="text-warning">@randomNameDisplay</h2>
+                    <h2 class="text-warning slot-machine">@randomNameDisplay</h2>
+                    <p class="text-white-50">RANDOMIZING TEAMS...</p>
                 </div>
                 } else {
                 @if (IsHost) {
@@ -114,6 +121,10 @@
             </div>
         </div>
         }
+        
+        
+        @* --- Character Selection  --- *@
+
         else if (matchSession.View == "draft") {
         var activePicker = matchSession.PickingOrder.ElementAtOrDefault(matchSession.CurrentPickerIndex);
         bool isMyTurn = activePicker?.ClaimedBySessionId == browserId;
@@ -130,7 +141,9 @@
                 </div>
             }
 
-        <div class="text-center mb-3">
+            @* --- Bans Button --- *@
+
+            <div class="text-center mb-3">
             <button class="btn btn-sm btn-outline-danger" @onclick="() => showBans = !showBans">Bans (@matchSession.CurrentBans.Count)</button>
             @if (showBans) {
             <div class="card card-body bg-dark border-danger p-2 mt-2">
@@ -142,6 +155,7 @@
             }
         </div>
 
+        @* --- Character Select By Team --- *@
         <div class="row g-4">
             <div class="col-md-6">
                 <h2 class="text-info border-bottom pb-2">TEAM 1</h2>
@@ -181,7 +195,13 @@
                     <select class="form-select bg-secondary text-white border-0" @bind="selectedSeries">
                         <option value="">All Series</option>
                         @foreach (var series in CharacterData.MasterList.Select(c => c.Series).Distinct().OrderBy(s => s)) {
-                        <option value="@series">@series</option>
+                            <option value="@series">@series</option>
+                        }
+                    </select>
+                    <select class="form-select bg-secondary text-white border-0" @bind="selectedTier">
+                        <option value="">All Tiers</option>
+                        @foreach (var tier in CharacterData.MasterList.Select(c => c.Tier).Distinct().OrderBy(t => t)) {
+                            <option value="@tier">@tier</option>
                         }
                     </select>
                 </div>
@@ -190,15 +210,53 @@
                 </div>
             </div>
 
+            @* --- CUSTOM HIGHLIGHT LAYER --- *@
+            <style>
+        .btn-z-tier {
+            background-color: rgba(255, 193, 7, 0.15) !important;
+            border: 2px solid #ffc107 !important;
+            box-shadow: 0 0 10px rgba(255, 193, 7, 0.25);
+        }
+        .btn-z-tier:hover:not(:disabled) {
+            background-color: #ffc107 !important;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+        }
+        .btn-z-tier:hover:not(:disabled) .tier-text-glow {
+            color: #000 !important;
+        }
+
+        .btn-s-tier {
+            background-color: rgba(226, 230, 234, 0.1) !important;
+            border: 2px solid #e2e6ea !important;
+            box-shadow: 0 0 10px rgba(226, 230, 234, 0.2);
+        }
+        .btn-s-tier:hover:not(:disabled) {
+            background-color: #e2e6ea !important;
+            box-shadow: 0 0 15px rgba(226, 230, 234, 0.4);
+        }
+        .btn-s-tier:hover:not(:disabled) .tier-text-glow {
+            color: #000 !important;
+        }
+    </style>
+
             <div class="d-flex flex-wrap gap-2 justify-content-center overflow-auto" style="max-height: 400px;">
                 @foreach (var charItem in GetFilteredCharacters()) {
-                bool isBanned = matchSession.CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
-                bool taken = matchSession.PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
-                <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled" : (taken ? "btn-secondary disabled opacity-25" : "btn-outline-primary"))"
-                        style="min-width: 140px;" @onclick="() => SelectCharacter(charItem)" disabled="@(taken || isBanned || !isMyTurn)">
-                    <div class="fw-bold text-white">@charItem.Name</div>
-                    <small class="text-white-50">@charItem.Series</small>
-                </button>
+                    bool isBanned = matchSession.CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
+                    bool taken = matchSession.PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
+            
+                    @* 1. Determine base button skin styling dynamically *@
+                    string btnTierStyle = "btn-outline-primary";
+                    if (!isBanned && !taken)
+                    {
+                        if (charItem.Tier == CharacterTier.Z) btnTierStyle = "btn-z-tier";
+                        else if (charItem.Tier == CharacterTier.S) btnTierStyle = "btn-s-tier";
+                    }
+
+                    <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled" : (taken ? "btn-secondary disabled opacity-25" : btnTierStyle))"
+                            style="min-width: 140px; transition: all 0.2s ease;" @onclick="() => SelectCharacter(charItem)" disabled="@(taken || isBanned || !isMyTurn)">
+                        <div class="fw-bold text-white tier-text-glow">@charItem.Name</div>
+                        <small class="text-white-50 tier-text-glow">@charItem.Series</small>
+                    </button>
                 }
             </div>
         </div>
@@ -287,7 +345,7 @@
     @code {
    
     private GameSession? matchSession;
-    private string joinCode = "", myIdentity = "", statsTab = "players", errorMessage = "", searchQuery = "", selectedSeries = "", randomNameDisplay = "";
+    private string joinCode = "", myIdentity = "", statsTab = "players", errorMessage = "", searchQuery = "", selectedSeries = "", randomNameDisplay = "", selectedTier = "";
     private string browserId = Guid.NewGuid().ToString();
     private int playersPerTeam = 2, charIdCounter = 1;
     private bool isSpinning = false, showBans = false;
@@ -297,20 +355,20 @@
 
     
     // Perma Bans
-    private readonly List<string> StaticBans = new() { "Denji", "Achilles", "Pucci", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Itadori Yuji", "Soulja Boy", "Gohan" };
+    private readonly List<string> StaticBans = new() { "Denji", "Achilles", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Itadori Yuji", "Soulja Boy", "Gohan" };
     
     
     // Rotating bans
     private readonly List<string> RotatingPool = new() {
-        "Soulja Boy", "Kazuma", "Misaka", "Usopp", "Crocodile", "Enel", "Jiren", "Yoshikage Kira", "Hol Horse", "Ishtar", "Meruem",
+        "Kazuma", "Misaka", "Usopp", "Crocodile", "Enel", "Jiren", "Yoshikage Kira", "Hol Horse", "Ishtar", "Meruem",
         "Morel","Madara", "PTS Luffy", "TS Luffy", "TS Zoro", "TS Sanji", "Kizaru", "Akainu", "Arlong", "Namek Goku", 
         "Android Vegeta", "Piccolo", "Krillin", "Buu Goku", "Trunks", "Caulifla", "Majin Vegeta", "Vegeto", "Frieza", 
         "Pui Pui", "Cell", "Super Goku", "Super Vegeta", "Gogeta", "Bardock", "Broly", "Goku Black", "PTS Naruto", 
-        "PTS Sasuke", "Kakashi", "Zabuza", "Gaara", "TS Naruto", "Itachi", "Pain", "Guy", "PTS Ichigo", "Rukia", "Grimmjow", 
-        "Starrk", "Toshiro", "Ulquiorra", "TS Ichigo", "Yoruichi", "Kenpachi", "Aizen", "Yhwach", "Yamamoto", "Rikka", "Afro", 
+        "PTS Sasuke", "Kakashi", "Zabuza", "Gaara", "TS Naruto", "Itachi", "Pain", "Guy", "PTS Ichigo", "Rukia", "Grimmjow",
+        "Starrk", "Toshiro", "Ulquiorra", "TS Ichigo", "Yoruichi", "Kenpachi", "Aizen", "Yhwach", "Yamamoto", "Rikka", "Afro",
         "Chika", "Ryuko", "Guts", "Asta", "Hiei", "Yusuke", "Accelerator", "Akira", "Ragna", "Alucard", "Edward", "Jotaro", 
         "Giorno", "Kira", "Ghiacchio", "Risotto", "Kars", "Dio", "Doppio", "Gon", "Kurapika", "Uvogin", "Sukuna", 
-        "Choso", "Nanami", "Jogo", "All Might", "Endeavor", "Saber", "Gilgamesh", "Kiritsugu", "Lancer", "Mash", "Illya", 
+        "Choso", "Nanami", "Jogo", "All Might", "Endeavor", "Saber", "Gilgamesh", "Kiritsugu", "Lancer", "Mash", "Illya", "Pucci",
         "Gray", "Natsu", "Aki", "Power", "Rengoku", "Kokushibo", "Tanjiro", "Sinon", "Asuna", "Saitama", "Raiden", "Snake", "Ricardo", "Roland"
     };
 
@@ -664,12 +722,10 @@
     }
 
     <style>
-        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin: 0 1px; }
         .rivalry-pulse { animation: pulse 1.5s infinite; border: 1px solid gold; }
         .shadow-glow-info { box-shadow: 0 0 15px rgba(13, 202, 240, 0.5); }
-        .shadow-glow-danger { box-shadow: 0 0 15px rgba(220, 53, 69, 0.5); }
-        .grayscale { filter: grayscale(1); }
         @@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .animate-bounce { animation: bounce 1s infinite; }
         @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        .slot-machine { animation: slot-flip 0.1s infinite; }
     </style>
