@@ -1,5 +1,6 @@
 @page "/Stats"
 @rendermode InteractiveServer
+@using System.Runtime
 @using NuzlockeTrackerWeb.Data
 @using Microsoft.EntityFrameworkCore
 @using NuzlockeTrackerWeb.Components.GameData
@@ -135,83 +136,45 @@
 }
     else if (!string.IsNullOrEmpty(activePlayerStats))
     {
-    var profile = GetPlayerProfileData(activePlayerStats);
-
-    <div class="card bg-dark text-light border-info p-4 reveal-card mb-4">
-        <div class="d-flex justify-content-between align-items-center border-b border-secondary pb-3 mb-4">
-            <div>
-                <h2 class="text-info fw-bold mb-0">👤 @activePlayerStats</h2>
-                <small class="text-white-50">Comprehensive Performance Analytics</small>
-            </div>
-            <button class="btn btn-outline-secondary" @onclick="() => activePlayerStats = null">
-                ← Back to Leaderboards
-            </button>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card bg-black border-secondary h-100">
-                    <div class="card-header bg-dark text-center py-2"><h5 class="mb-0 text-white">Character Pools</h5></div>
-                    <div class="card-body p-3">
-                        <h6 class="text-success fw-bold small text-uppercase mb-2">🔥 Top Performers</h6>
-                        @foreach(var c in profile.BestCharacters.Take(3)) {
-                            <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                                <span>• @c.Key</span> <span class="text-success fw-bold">@c.Value% WR</span>
-                            </div>
-                        }
-                        <h6 class="text-danger fw-bold small text-uppercase mt-4 mb-2">📉 Low Win Rate</h6>
-                        @foreach(var c in profile.WorstCharacters.Take(3)) {
-                            <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                                <span>• @c.Key</span> <span class="text-danger fw-bold">@c.Value% WR</span>
-                            </div>
-                        }
-                    </div>
+        var profile = GetPlayerData(activePlayerStats);
+    
+        <div class="card bg-dark text-light border-info p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-3 mb-4">
+                <div>
+                    <h2 class="text-info fw-bold mb-0">@activePlayerStats</h2>
+                    <span class="text-white-50">Record: </span>
+                    <span class="text-info fw-bold">@profile.Wins W</span> - <span class="text-danger fw-bold">@profile.Losses L</span>
                 </div>
+                <button class="btn btn-outline-secondary" @onclick="() => activePlayerStats = null">
+                    ← Back to Leaderboards
+                </button>
             </div>
 
-            <div class="col-md-4">
-                <div class="card bg-black border-secondary h-100">
-                    <div class="card-header bg-dark text-center py-2"><h5 class="mb-0 text-white">Squad Synergy</h5></div>
-                    <div class="card-body p-3">
-                        <h6 class="text-info fw-bold small text-uppercase mb-2">🤝 Strongest Synergies</h6>
-                        @foreach(var t in profile.BestTeams.Take(3)) {
-                            <div class="d-flex flex-column border-bottom border-secondary py-1 small mb-1">
-                                <span class="text-truncate text-warning">@t.Key</span>
-                                <span class="text-info text-end fw-bold" style="font-size:0.75rem;">@t.Value% WR</span>
-                            </div>
-                        }
-                        <h6 class="text-danger fw-bold small text-uppercase mt-3 mb-2">⚠️ Weakest Synergies</h6>
-                        @foreach(var t in profile.WorstTeams.Take(3)) {
-                            <div class="d-flex flex-column border-bottom border-secondary py-1 small mb-1">
-                                <span class="text-truncate text-white-50">@t.Key</span>
-                                <span class="text-danger text-end fw-bold" style="font-size:0.75rem;">@t.Value% WR</span>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card bg-black border-secondary h-100">
-                    <div class="card-header bg-dark text-center py-2"><h5 class="mb-0 text-white">Rivalries</h5></div>
-                    <div class="card-body p-3">
-                        <h6 class="text-success fw-bold small text-uppercase mb-2">⚔️ Favored Matchups</h6>
-                        @foreach(var m in profile.BestMatchups.Take(3)) {
-                            <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                                <span>vs @m.Key</span> <span class="text-success fw-bold">@m.Value% WR</span>
-                            </div>
-                        }
-                        <h6 class="text-danger fw-bold small text-uppercase mt-4 mb-2">💀 Nemesis Matchups</h6>
-                        @foreach(var m in profile.WorstMatchups.Take(3)) {
-                            <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                                <span>vs @m.Key</span> <span class="text-danger fw-bold">@m.Value% WR</span>
-                            </div>
-                        }
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card bg-black border-secondary">
+                        <div class="card-header bg-dark text-center py-2">
+                            <h5 class="mb-0 text-white">Character Bag</h5>
+                        </div>
+                        <div class="card-body p-3">
+                            @if (profile.PlayedCharacters.Any())
+                            {
+                                @foreach(var c in profile.PlayedCharacters) {
+                                    <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
+                                        <span>• @c.CharacterName</span> 
+                                        <span class="text-info">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-muted small text-center">No characters recorded.</div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 }
 
     else
@@ -244,7 +207,7 @@
             {
                 <tr @onclick="() => activePlayerStats = stat.PlayerName" style="cursor: pointer;" class="align-middle">
                     <td class="fw-bold text-info text-start ps-4">
-                        <button class="btn btn-sm btn-outline-info me-2">📊</button> @stat.PlayerName
+                        <button class="btn btn-sm btn-outline-info me-2"></button> @stat.PlayerName
                     </td>
                     <td><span class="text-info">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
                     <td>
@@ -577,6 +540,7 @@
         public int Losses { get; set; }
         public int PlayerStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
+        public List<CharacterRecord> PlayedCharacters { get; set; } = new();
     }
 
     public class TeamRecord
@@ -626,87 +590,48 @@
         if (activeCharSortColumn != columnName) return "";
         return isCharSortDescending ? "▼" : "▲";
     }
-   public class PlayerProfileAnalysis
-{
-    public List<KeyValuePair<string, int>> BestCharacters { get; set; } = new();
-    public List<KeyValuePair<string, int>> WorstCharacters { get; set; } = new();
-    public List<KeyValuePair<string, int>> BestTeams { get; set; } = new();
-    public List<KeyValuePair<string, int>> WorstTeams { get; set; } = new();
-    public List<KeyValuePair<string, int>> BestMatchups { get; set; } = new();
-    public List<KeyValuePair<string, int>> WorstMatchups { get; set; } = new();
-}
 
-private PlayerProfileAnalysis GetPlayerProfileData(string targetPlayer)
-{
-    var profile = new PlayerProfileAnalysis();
-    
-    var charWins = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    var charTotal = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    
-    var teamWins = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    var teamTotal = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    
-    var rivalWins = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    var rivalTotal = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-
-    foreach (var match in historicalMatches)
+    private PlayerRecord GetPlayerData(string targetPlayer)
     {
-        if (match.Team1Names == null || match.Team2Names == null) continue;
+        var playerData = playerRankings.FirstOrDefault(p => p.PlayerName.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)) 
+                         ?? new PlayerRecord { PlayerName = targetPlayer };
+        
+        var characterMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
 
-        bool inTeam1 = match.Team1Names.Contains(targetPlayer, StringComparer.OrdinalIgnoreCase);
-        bool inTeam2 = match.Team2Names.Contains(targetPlayer, StringComparer.OrdinalIgnoreCase);
-
-        if (!inTeam1 && !inTeam2) continue; // Skip if this player wasn't in this match
-
-        int mySide = inTeam1 ? 1 : 2;
-        bool isWin = match.WinningTeamSide == mySide;
-
-        var myTeamNames = mySide == 1 ? match.Team1Names : match.Team2Names;
-        var myTeamRoster = mySide == 1 ? match.Team1Roster : match.Team2Roster;
-        var enemyTeamNames = mySide == 1 ? match.Team2Names : match.Team1Names;
-
-        int playerIdx = myTeamNames.FindIndex(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
-
-        if (myTeamRoster != null && playerIdx >= 0)
+        foreach (var match in historicalMatches)
         {
-            var playerCharacters = myTeamRoster.Skip(playerIdx * 5).Take(5).Where(c => !string.IsNullOrWhiteSpace(c));
-            foreach (var character in playerCharacters)
+            if (match.Team1Names == null || match.Team2Names == null) continue;
+            
+            bool inTeam1 = match.Team1Names.Contains(targetPlayer, StringComparer.OrdinalIgnoreCase);
+            bool inTeam2 = match.Team2Names.Contains(targetPlayer, StringComparer.OrdinalIgnoreCase);
+            
+            if (!inTeam1 && !inTeam2) continue;
+
+            int playerTeam = inTeam1 ? 1 : 2;
+            bool isWin = match.WinningTeamSide == playerTeam;
+
+            var myTeamNames = playerTeam == 1 ? match.Team1Names : match.Team2Names;
+            var myTeamRoster = playerTeam == 1 ? match.Team1Roster : match.Team2Roster;
+            
+            int playerIndex = myTeamNames.FindIndex(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
+            if (myTeamRoster != null && playerIndex >= 0)
             {
-                charTotal[character] = charTotal.GetValueOrDefault(character) + 1;
-                if (isWin) charWins[character] = charWins.GetValueOrDefault(character) + 1;
+                var playerCharacters = myTeamRoster.Skip(playerIndex * 5).Take(5).Where(c => !string.IsNullOrWhiteSpace(c));
+                foreach (var character in playerCharacters)
+                {
+                    if (!characterMap.TryGetValue(character, out var charRecord))
+                    {
+                        charRecord = new CharacterRecord { CharacterName = character };
+                        characterMap[character] = charRecord;
+                    }
+
+                    if (isWin) charRecord.Wins++; else charRecord.Losses++;
+                }
             }
         }
-
-        var allies = myTeamNames.Where(n => !n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)).OrderBy(n => n).ToList();
-        if (allies.Any())
-        {
-            string teamKey = string.Join(" & ", allies);
-            teamTotal[teamKey] = teamTotal.GetValueOrDefault(teamKey) + 1;
-            if (isWin) teamWins[teamKey] = teamWins.GetValueOrDefault(teamKey) + 1;
-        }
-
-        foreach (var rival in enemyTeamNames)
-        {
-            if (string.IsNullOrWhiteSpace(rival)) continue;
-            rivalTotal[rival] = rivalTotal.GetValueOrDefault(rival) + 1;
-            if (isWin) rivalWins[rival] = rivalWins.GetValueOrDefault(rival) + 1;
-        }
+        playerData.PlayedCharacters = characterMap.Values.OrderByDescending(c => c.Wins + c.Losses).ToList();
+        
+        return playerData;
     }
-
-    var charRates = charTotal.Select(c => new KeyValuePair<string, int>(c.Key, (charWins.GetValueOrDefault(c.Key) * 100) / c.Value)).ToList();
-    var teamRates = teamTotal.Select(t => new KeyValuePair<string, int>(t.Key, (teamWins.GetValueOrDefault(t.Key) * 100) / t.Value)).ToList();
-    var rivalRates = rivalTotal.Select(r => new KeyValuePair<string, int>(r.Key, (rivalWins.GetValueOrDefault(r.Key) * 100) / r.Value)).ToList();
-
-    profile.BestCharacters = charRates.OrderByDescending(c => c.Value).ToList();
-    profile.WorstCharacters = charRates.OrderBy(c => c.Value).ToList();
-
-    profile.BestTeams = teamRates.OrderByDescending(t => t.Value).ToList();
-    profile.WorstTeams = teamRates.OrderBy(t => t.Value).ToList();
-
-    profile.BestMatchups = rivalRates.OrderByDescending(r => r.Value).ToList();
-    profile.WorstMatchups = rivalRates.OrderBy(r => r.Value).ToList();
-
-    return profile;
-}
  }
 </div>
