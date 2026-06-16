@@ -146,7 +146,7 @@
                     <div class="card-header border-info bg-black d-flex justify-content-between align-items-center p-0">
                         <div class="btn-group w-100">
                             <button class="btn @(statsCategory == StatsCategory.Players ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => statsCategory = StatsCategory.Characters'>👤 Players</button>
+                                    @onclick='() => statsCategory = StatsCategory.Players'>👤 Players</button>
                             <button class="btn @(statsCategory == StatsCategory.Teams ? "btn-info" : "btn-dark")" 
                                     @onclick='() => statsCategory = StatsCategory.Teams'>👥 Teams</button>
                             <button class="btn @(statsCategory == StatsCategory.Characters ? "btn-info" : "btn-dark")" 
@@ -177,7 +177,7 @@
     else if (statsCategory == StatsCategory.Teams) 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
-            <thead><tr><th>Squad Composition</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
+            <thead><tr><th>Team</th><th>W - L</th><th>Streak</th><th>Ratio</th></tr></thead>
             <tbody>
             @foreach (var team in teamRecords) {
                 <tr>
@@ -203,6 +203,8 @@
                 <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("wins")'>Wins @GetSortArrow("wins")</th>
                 <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("losses")'>Losses @GetSortArrow("losses")</th>
                 <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("ratio")'>Win Rate @GetSortArrow("ratio")</th>
+                <th style="cursor: pointer; user-select: none;" @onclick=' () => SortCharacters("streak")'> Streak </th>
+
             </tr>
             </thead>
             <tbody>
@@ -293,7 +295,6 @@
         
     private List<MatchResult> historicalMatches = new();
     private MatchResult? activeDetailedMatch;
-    private string currentStatsCategory = "players";
     private StatsCategory statsCategory;
     private List<PlayerRecord> playerRankings = new();
     private List<TeamRecord> teamRecords = new();
@@ -525,6 +526,7 @@
             "name" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.CharacterName).ToList() : characterRecords.OrderBy(c => c.CharacterName).ToList(),
             "wins" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Wins).ToList() : characterRecords.OrderBy(c => c.Wins).ToList(),
             "losses" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Losses).ToList() : characterRecords.OrderBy(c => c.Losses).ToList(),
+            "streak" => isCharSortDescending ? characterRecords.OrderByDescending(c=> c.Ratio).ToList() : characterRecords.OrderBy(c => c.CurrentStreak).ToList(),
             "ratio" or _ => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Ratio).ToList() : characterRecords.OrderBy(c => c.Ratio).ToList()
         };
     }
