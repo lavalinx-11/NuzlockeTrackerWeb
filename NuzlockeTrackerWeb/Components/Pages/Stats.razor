@@ -8,43 +8,42 @@
 
 
  <div class="container py-4">
-    @* The HTML UI checks our renamed variables to decide what layout to show *@
-    @if (_activeDetailedMatch != null)
+    @if (activeDetailedMatch != null)
 {
     <div class="card bg-dark text-light border-secondary p-4">
-        <button class="btn btn-outline-secondary mb-3 align-self-start" @onclick="() => _activeDetailedMatch = null"> ← Back to Match History </button>
+        <button class="btn btn-outline-secondary mb-3 align-self-start" @onclick="() => activeDetailedMatch = null"> ← Back to Match History </button>
         
         <div class="row align-items-center text-center mb-3">
             <h3>Match Details</h3>
             <p class="mb-1 text-white-50">Date Played:</p>
-            <p class="text-warning fw-bold">@_activeDetailedMatch.MatchDate.ToString("yyyy-MM-dd")</p>
+            <p class="text-warning fw-bold">@activeDetailedMatch.MatchDate.ToString("yyyy-MM-dd")</p>
             
             <div class="col-5">
-                @foreach(var name in _activeDetailedMatch.Team1Names) {
+                @foreach(var name in activeDetailedMatch.Team1Names) {
                     <h3 class="badge bg-info text-dark fs-4 m-1">@name</h3>
                 }
             </div>
             <div class="col-2">
                 <div class="display-3 fw-bold text-warning" style="text-shadow: 0 0 15px rgba(255,193,7,0.4);">
-                    @_activeDetailedMatch.Team1Rounds - @_activeDetailedMatch.Team2Rounds
+                    @activeDetailedMatch.Team1Rounds - @activeDetailedMatch.Team2Rounds
                 </div>
             </div>
             <div class="col-5">
-                @foreach(var name in _activeDetailedMatch.Team2Names) {
+                @foreach(var name in activeDetailedMatch.Team2Names) {
                     <h3 class="badge bg-danger text-white fs-4 m-1">@name</h3>
                 }
             </div>
         </div>
 
         @* --- NEW BANNED CHARACTERS SECTION --- *@
-        @if (_activeDetailedMatch.BanList != null && _activeDetailedMatch.BanList.Any())
+        @if (activeDetailedMatch.BanList != null && activeDetailedMatch.BanList.Any())
         {
             <div class="border-top border-secondary pt-3 text-center">
                 <h6 class="text-uppercase tracking-wider text-danger fw-bold mb-2" style="font-size: 0.85rem; letter-spacing: 1px;">
                     Banned Characters
                 </h6>
                 <div class="d-flex flex-wrap gap-2 justify-content-center">
-                    @foreach (var bannedChar in _activeDetailedMatch.BanList)
+                    @foreach (var bannedChar in activeDetailedMatch.BanList)
                     {
                         <span class="badge bg-black border border-danger text-danger px-3 py-2 fw-bold">
                             @bannedChar
@@ -62,12 +61,12 @@
 <div class="col-6 border-end border-secondary">
     <h6 class="text-info mb-3 fw-bold">TEAM 1 PICKS</h6>
     <div class="d-flex flex-column gap-3">
-        @for (int i = 0; i < _activeDetailedMatch.Team1Names.Count; i++)
+        @for (int i = 0; i < activeDetailedMatch.Team1Names.Count; i++)
         {
-            var player = _activeDetailedMatch.Team1Names[i];
+            var player = activeDetailedMatch.Team1Names[i];
             
             @* Extract the 5 characters belonging to this specific player index *@
-            var playerCharacters = _activeDetailedMatch.Team1Roster?
+            var playerCharacters = activeDetailedMatch.Team1Roster?
                 .Skip(i * 5)
                 .Take(5)
                 .Where(c => !string.IsNullOrWhiteSpace(c))
@@ -99,11 +98,11 @@
 <div class="col-6">
     <h6 class="text-danger mb-3 fw-bold text-end">TEAM 2 PICKS</h6>
     <div class="d-flex flex-column gap-3 align-items-end">
-        @for (int i = 0; i < _activeDetailedMatch.Team2Names.Count; i++)
+        @for (int i = 0; i < activeDetailedMatch.Team2Names.Count; i++)
         {
-            var player = _activeDetailedMatch.Team2Names[i];
+            var player = activeDetailedMatch.Team2Names[i];
             
-            var playerCharacters = _activeDetailedMatch.Team2Roster?
+            var playerCharacters = activeDetailedMatch.Team2Roster?
                 .Skip(i * 5)
                 .Take(5)
                 .Where(c => !string.IsNullOrWhiteSpace(c))
@@ -145,22 +144,22 @@
                 <div class="card bg-dark border-info text-light shadow h-100">
                     <div class="card-header border-info bg-black d-flex justify-content-between align-items-center p-0">
                         <div class="btn-group w-100">
-                            <button class="btn @(_currentStatsCategory == "players" ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => _currentStatsCategory = "players"'>👤 Players</button>
-                            <button class="btn @(_currentStatsCategory == "teams" ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => _currentStatsCategory = "teams"'>👥 Teams</button>
-                            <button class="btn @(_currentStatsCategory == "characters" ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => _currentStatsCategory = "characters"'>👥 Characters</button>
+                            <button class="btn @(currentStatsCategory == "players" ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => currentStatsCategory = "players"'>👤 Players</button>
+                            <button class="btn @(currentStatsCategory == "teams" ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => currentStatsCategory = "teams"'>👥 Teams</button>
+                            <button class="btn @(currentStatsCategory == "characters" ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => currentStatsCategory = "characters"'>👥 Characters</button>
                         </div>
                     </div>
 
                    <div class="card-body p-0">
-    @if (_currentStatsCategory == "players") 
+    @if (currentStatsCategory == "players") 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
             <thead><tr><th>Player</th><th>W - L</th><th>Streak</th><th>Ratio</th></tr></thead>
             <tbody>
-            @foreach (var stat in _playerRankings) {
+            @foreach (var stat in playerRankings) {
                 <tr>
                     <td class="fw-bold">@stat.PlayerName</td>
                     <td><span class="text-info">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
@@ -174,12 +173,12 @@
             </tbody>
         </table>
     } 
-    else if (_currentStatsCategory == "teams") 
+    else if (currentStatsCategory == "teams") 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
             <thead><tr><th>Squad Composition</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
             <tbody>
-            @foreach (var team in _teamRecords) {
+            @foreach (var team in teamRecords) {
                 <tr>
                     <td class="fw-bold text-warning">@team.TeamComposition</td>
                     <td class="text-info">@team.Wins</td>
@@ -190,7 +189,7 @@
             </tbody>
         </table>
     } 
-    else if (_currentStatsCategory == "characters") 
+    else if (currentStatsCategory == "characters") 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
             <thead>
@@ -202,7 +201,7 @@
             </tr>
             </thead>
             <tbody>
-            @foreach (var hero in _characterRecords) {
+            @foreach (var hero in characterRecords) {
                 <tr>
                     <td class="fw-bold text-white">@hero.CharacterName</td>
                     <td class="text-info">@hero.Wins</td>
@@ -225,7 +224,7 @@
                     <div class="card-body p-0">
                         <table class="table table-dark table-sm mb-0">
                             <tbody>
-                            @foreach (var team in _teamRecords.Take(3)) {
+                            @foreach (var team in teamRecords.Take(3)) {
                                 <tr><td class="ps-3 py-2 small">@team.TeamComposition</td><td class="text-end pe-3 text-warning">@team.Wins-@team.Losses</td></tr>
                             }
                             </tbody>
@@ -239,10 +238,10 @@
                     <div class="card-header bg-black"><h5>Full Match History</h5></div>
                     <div class="card-body p-0">
                         <div class="list-group list-group-flush">
-                            @for (int i = _historicalMatches.Count - 1; i >= 0; i--) {
-                                var match = _historicalMatches[i];
+                            @for (int i = historicalMatches.Count - 1; i >= 0; i--) {
+                                var match = historicalMatches[i];
                                 var idx = i;
-                                <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3"@onclick="() => _activeDetailedMatch = match">
+                                <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3"@onclick="() => activeDetailedMatch = match">
         <div class="row align-items-center">
             <div class="col-4">
                 @foreach (var name in match.Team1Names)
@@ -273,16 +272,16 @@
     }
     
     @code {
-        private string _activeCharSortColumn = "ratio"; 
-        private bool _isCharSortDescending = true;
+        private string activeCharSortColumn = "ratio"; 
+        private bool isCharSortDescending = true;
         
-    private List<MatchResult> _historicalMatches = new();
-    private MatchResult? _activeDetailedMatch = null;
-    private string _currentStatsCategory = "players"; // Replaces "statsTab"
+    private List<MatchResult> historicalMatches = new();
+    private MatchResult? activeDetailedMatch = null;
+    private string currentStatsCategory = "players"; 
     
-    private List<PlayerLeaderboardEntry> _playerRankings = new();
-    private List<TeamCompositionRecord> _teamRecords = new();
-    private List<CharacterWinRateRecord> _characterRecords = new();
+    private List<PlayerLeaderboardEntry> playerRankings = new();
+    private List<TeamCompositionRecord> teamRecords = new();
+    private List<CharacterWinRateRecord> characterRecords = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -293,10 +292,10 @@
             .Take(50) 
             .ToListAsync();
 
-        _historicalMatches = matchesFromDatabase;
-        _playerRankings = RunPlayerMathEngine(_historicalMatches);
-        _teamRecords = RunTeamMathEngine(_historicalMatches);
-        _characterRecords = RunCharacterMathEngine(_historicalMatches); 
+        historicalMatches = matchesFromDatabase;
+        playerRankings = RunPlayerMathEngine(historicalMatches);
+        teamRecords = RunTeamMathEngine(historicalMatches);
+        characterRecords = RunCharacterMathEngine(historicalMatches); 
     }
 
     // --- Cleaned up logic loops from your old page ---
@@ -464,7 +463,6 @@
             .ToList();
     }
 
-// DTO Class representation for clean rendering
     public class CharacterWinRateRecord
     {
         public string CharacterName { get; set; } = "";
@@ -474,30 +472,61 @@
     }
     private void SortCharacters(string columnName)
     {
-        if (_activeCharSortColumn == columnName)
+        if (activeCharSortColumn == columnName)
         {
             // Toggle direction if clicking the same column again
-            _isCharSortDescending = !_isCharSortDescending;
+            isCharSortDescending = !isCharSortDescending;
         }
         else
         {
-            _activeCharSortColumn = columnName;
-            _isCharSortDescending = true; // Default to highest values first
+            activeCharSortColumn = columnName;
+            isCharSortDescending = true; // Default to highest values first
         }
 
-        _characterRecords = columnName switch
+        characterRecords = columnName switch
         {
-            "name" => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.CharacterName).ToList() : _characterRecords.OrderBy(c => c.CharacterName).ToList(),
-            "wins" => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.Wins).ToList() : _characterRecords.OrderBy(c => c.Wins).ToList(),
-            "losses" => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.Losses).ToList() : _characterRecords.OrderBy(c => c.Losses).ToList(),
-            "ratio" or _ => _isCharSortDescending ? _characterRecords.OrderByDescending(c => c.Ratio).ToList() : _characterRecords.OrderBy(c => c.Ratio).ToList()
+            "name" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.CharacterName).ToList() : characterRecords.OrderBy(c => c.CharacterName).ToList(),
+            "wins" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Wins).ToList() : characterRecords.OrderBy(c => c.Wins).ToList(),
+            "losses" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Losses).ToList() : characterRecords.OrderBy(c => c.Losses).ToList(),
+            "ratio" or _ => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Ratio).ToList() : characterRecords.OrderBy(c => c.Ratio).ToList()
         };
     }
 
     private string GetSortArrow(string columnName)
     {
-        if (_activeCharSortColumn != columnName) return "";
-        return _isCharSortDescending ? "▼" : "▲";
+        if (activeCharSortColumn != columnName) return "";
+        return isCharSortDescending ? "▼" : "▲";
     }
+    // Old Player Stat Function 
+    /*private List<PlayerStat> GetPlayerStats() {
+        var stats = new Dictionary<string, PlayerStat>();
+        if (MatchSession == null) return new();
+        foreach (var match in MatchSession.MatchHistory) {
+            var winners = match.WinningTeamSide == 1 ? match.Team1Names : match.Team2Names;
+            var losers = match.WinningTeamSide == 1 ? match.Team2Names : match.Team1Names;
+            foreach (var n in winners) {
+                if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
+                stats[n].Wins++; stats[n].CurrentStreak++;
+            }
+    
+            foreach (var n in losers) {
+                if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
+                stats[n].Losses++; stats[n].CurrentStreak = 0;
+            }
+        }
+        return stats.Values.OrderByDescending(x => x.Wins).ToList();
+    }
+
+    private List<TeamStat> GetTeamStats() {
+        var teamStats = new Dictionary<string, TeamStat>();
+        if (MatchSession == null) return new();
+        foreach (var match in MatchSession.MatchHistory) {
+            if (!teamStats.ContainsKey(match.Team1Key)) teamStats[match.Team1Key] = new TeamStat { TeamComposition = match.Team1Key };
+            if (!teamStats.ContainsKey(match.Team2Key)) teamStats[match.Team2Key] = new TeamStat { TeamComposition = match.Team2Key };
+            if (match.WinningTeamSide == 1) { teamStats[match.Team1Key].Wins++; teamStats[match.Team2Key].Losses++; }
+            else { teamStats[match.Team2Key].Wins++; teamStats[match.Team1Key].Losses++; }
+        }
+        return teamStats.Values.OrderByDescending(x => x.Wins).ToList();
+    }*/
  }
 </div>

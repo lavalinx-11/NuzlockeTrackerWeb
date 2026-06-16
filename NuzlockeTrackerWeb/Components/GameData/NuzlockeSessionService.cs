@@ -4,10 +4,17 @@ using System.Linq;
 
 namespace NuzlockeTrackerWeb.Components.GameData
 {
-    // --- SECTION: DATA MODELS ---
+    public enum MatchStage
+    {
+        Home,
+        Setup,
+        CharacterSelect,
+        Game,
+    }
+    //  MATCH DATA 
     public class MatchResult {
-        public int Id { get; set; } // <--- THE KEY ADDITION
-        public DateTime MatchDate { get; set; } = DateTime.UtcNow; // Good for sorting!
+        public int Id { get; set; } 
+        public DateTime MatchDate { get; set; } = DateTime.UtcNow; 
         public string Team1Key { get; set; } = "";
         public string Team2Key { get; set; } = "";
         public List<string> Team1Names { get; set; } = new();
@@ -20,6 +27,7 @@ namespace NuzlockeTrackerWeb.Components.GameData
         public int WinningTeamSide { get; set; }
     }
 
+    // Stats Per Player
     public class PlayerStat {
         public string Name { get; set; } = "";
         public int Wins { get; set; }
@@ -29,6 +37,7 @@ namespace NuzlockeTrackerWeb.Components.GameData
         public int Ratio => (Wins + Losses) == 0 ? 0 : (int)((double)Wins / (Wins + Losses) * 100);
     }
 
+    // Stats Per Team
     public class TeamStat {
         public string TeamComposition { get; set; } = "";
         public int Wins { get; set; }
@@ -36,10 +45,10 @@ namespace NuzlockeTrackerWeb.Components.GameData
         public int Ratio => (Wins + Losses) == 0 ? 0 : (int)((double)Wins / (Wins + Losses) * 100);
     }
 
-    // --- SECTION: SHARED SESSION ---
+    //  Live Match Data (Used While Playing Actively) 
     public class GameSession {
         public string Id { get; set; } = Guid.NewGuid().ToString()[..6].ToUpper();
-        public string View { get; set; } = "menu";
+        public MatchStage Stage { get; set; } = MatchStage.Home;
         public List<Player> Team1 { get; set; } = new();
         public List<Player> Team2 { get; set; } = new();
         public List<Player> PickingOrder { get; set; } = new();
@@ -58,9 +67,11 @@ namespace NuzlockeTrackerWeb.Components.GameData
     public class NuzlockeSessionService {
         public Dictionary<string, GameSession> Sessions { get; } = new();
         public GameSession Create() {
-            var s = new GameSession();
-            Sessions[s.Id] = s;
-            return s;
+            GameSession session = new GameSession();
+            Sessions[session.Id] = session;
+            return session;
         }
     }
+    
+    
 }
