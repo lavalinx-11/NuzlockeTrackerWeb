@@ -41,7 +41,7 @@
         {
             <div class="border-top border-secondary pt-3 text-center">
                 <h6 class="text-uppercase tracking-wider text-danger fw-bold mb-2" style="font-size: 0.85rem; letter-spacing: 1px;">
-                    🚫 Banned Characters
+                    Banned Characters
                 </h6>
                 <div class="d-flex flex-wrap gap-2 justify-content-center">
                     @foreach (var bannedChar in _activeDetailedMatch.BanList)
@@ -82,7 +82,7 @@
                     {
                         @foreach (var character in playerCharacters)
                         {
-                            <div class="text-info fw-bold">→ @character</div>
+                            <div class="text-info fw-bold">• @character</div>
                         }
                     }
                     else
@@ -103,7 +103,6 @@
         {
             var player = _activeDetailedMatch.Team2Names[i];
             
-            @* Extract the 5 characters belonging to this specific player index *@
             var playerCharacters = _activeDetailedMatch.Team2Roster?
                 .Skip(i * 5)
                 .Take(5)
@@ -119,7 +118,7 @@
                     {
                         @foreach (var character in playerCharacters)
                         {
-                            <div class="text-danger fw-bold">@character ←</div>
+                            <div class="text-danger fw-bold">@character •</div>
                         }
                     }
                     else
