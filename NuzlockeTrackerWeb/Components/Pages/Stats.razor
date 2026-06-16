@@ -58,46 +58,79 @@
     @* --- DETAILED ROSTER SELECTION GRID --- *@
     <div class="card-body bg-black p-4 rounded-bottom border border-top-0 border-secondary">
         <div class="row">
-            <!-- Team 1 Selections -->
-            <div class="col-6 border-end border-secondary">
-                <h6 class="text-info mb-3 fw-bold">TEAM 1 PICKS</h6>
-                <div class="d-flex flex-column gap-2">
-                    @for (int i = 0; i < _activeDetailedMatch.Team1Names.Count; i++)
-                    {
-                        var player = _activeDetailedMatch.Team1Names[i];
-                        // Safeguard against missing roster data if an index is out of bounds
-                        var character = (_activeDetailedMatch.Team1Roster != null && _activeDetailedMatch.Team1Roster.Count > i) 
-                                        ? _activeDetailedMatch.Team1Roster[i] 
-                                        : "Unknown Character";
+           <!-- Team 1 Selections -->
+<div class="col-6 border-end border-secondary">
+    <h6 class="text-info mb-3 fw-bold">TEAM 1 PICKS</h6>
+    <div class="d-flex flex-column gap-3">
+        @for (int i = 0; i < _activeDetailedMatch.Team1Names.Count; i++)
+        {
+            var player = _activeDetailedMatch.Team1Names[i];
+            
+            @* Extract the 5 characters belonging to this specific player index *@
+            var playerCharacters = _activeDetailedMatch.Team1Roster?
+                .Skip(i * 5)
+                .Take(5)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToList() ?? new List<string>();
 
-                        <div class="d-flex align-items-center gap-2 bg-dark p-2 rounded border border-info-subtle">
-                            <span class="badge bg-info text-dark fw-bold">@player</span>
-                            <span class="text-white-50">→</span>
-                            <span class="text-info fw-bold">@character</span>
-                        </div>
+            <div class="bg-dark p-3 rounded border border-info-subtle">
+                <div class="mb-2">
+                    <span class="badge bg-info text-dark fw-bold fs-6">@player</span>
+                </div>
+                <div class="d-flex flex-column gap-1 ps-2 border-start border-secondary">
+                    @if (playerCharacters.Any())
+                    {
+                        @foreach (var character in playerCharacters)
+                        {
+                            <div class="text-info fw-bold">→ @character</div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted small">No characters picked</div>
                     }
                 </div>
             </div>
+        }
+    </div>
+</div>
 
-            <!-- Team 2 Selections -->
-            <div class="col-6">
-                <h6 class="text-danger mb-3 fw-bold text-end">TEAM 2 PICKS</h6>
-                <div class="d-flex flex-column gap-2 align-items-end">
-                    @for (int i = 0; i < _activeDetailedMatch.Team2Names.Count; i++)
+<!-- Team 2 Selections -->
+<div class="col-6">
+    <h6 class="text-danger mb-3 fw-bold text-end">TEAM 2 PICKS</h6>
+    <div class="d-flex flex-column gap-3 align-items-end">
+        @for (int i = 0; i < _activeDetailedMatch.Team2Names.Count; i++)
+        {
+            var player = _activeDetailedMatch.Team2Names[i];
+            
+            @* Extract the 5 characters belonging to this specific player index *@
+            var playerCharacters = _activeDetailedMatch.Team2Roster?
+                .Skip(i * 5)
+                .Take(5)
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToList() ?? new List<string>();
+
+            <div class="bg-dark p-3 rounded border border-danger-subtle w-100 text-end">
+                <div class="mb-2">
+                    <span class="badge bg-danger text-white fw-bold fs-6">@player</span>
+                </div>
+                <div class="d-flex flex-column gap-1 pe-2 border-end border-secondary align-items-end">
+                    @if (playerCharacters.Any())
                     {
-                        var player = _activeDetailedMatch.Team2Names[i];
-                        var character = (_activeDetailedMatch.Team2Roster != null && _activeDetailedMatch.Team2Roster.Count > i) 
-                                        ? _activeDetailedMatch.Team2Roster[i] 
-                                        : "Unknown Character";
-
-                        <div class="d-flex align-items-center gap-2 bg-dark p-2 rounded border border-danger-subtle justify-content-end w-100">
-                            <span class="text-danger fw-bold">@character</span>
-                            <span class="text-white-50">←</span>
-                            <span class="badge bg-danger text-white fw-bold">@player</span>
-                        </div>
+                        @foreach (var character in playerCharacters)
+                        {
+                            <div class="text-danger fw-bold">@character ←</div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted small">No characters picked</div>
                     }
                 </div>
             </div>
+        }
+    </div>
+</div>
         </div>
     </div>
 }
