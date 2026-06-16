@@ -137,29 +137,131 @@
     else if (!string.IsNullOrEmpty(activePlayerStats))
     {
         var profile = GetPlayerData(activePlayerStats);
-    
+        <div class="row">
         <div class="card bg-dark text-light border-info p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-3 mb-4">
                 <div>
                     <h2 class="text-info fw-bold mb-0">@activePlayerStats</h2>
                     <h2 class="text-white-50">Record: </h2>
-                    <h2 class="text-info fw-bold">@profile.Wins W</h2> - <h2 class="text-danger fw-bold">@profile.Losses L</h2>
+                    <h2 class="text-info fw-bold">@profile.Wins W</h2> <h2 class="text-danger fw-bold">@profile.Losses L</h2>
                 </div>
                 <button class="btn btn-outline-secondary" @onclick="() => activePlayerStats = null">
                     ← Back to Leaderboards
                 </button>
             </div>
+            
+            <div class="col-md-6">
+                <div class="card bg-black border-secondary">
+                    <div class="card-header bg-dark text-center py-2">
+                        <h5 class="mb-0 text-white">Character Performance</h5>
+                    </div>
+                    <div class="card-body p-3">
+                        @if (profile.PlayedCharacters.Any())
+                        {
+                            var best = profile.PlayedCharacters
+                                .OrderByDescending(c => c.Wins)
+                                .ThenByDescending(c => c.Ratio)
+                                .Take(5)
+                                .ToList();
 
-            <div class="row">
+             
+                            var worst = profile.PlayedCharacters
+                                .OrderBy(c => c.Losses)
+                                .ThenByDescending(c => c.Ratio)
+                                .Where(c => !best.Contains(c))
+                                .Take(5)
+                                .ToList();
+
+                            <h6 class="text-success fw-bold small text-uppercase mb-2"> Best Characters </h6>
+                            @foreach(var c in best) {
+                                <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
+                                    <span class="text-white fw-bold">• @c.CharacterName</span> 
+                                    <span class="text-info fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                                </div>
+                            }
+
+                            @if (worst.Any())
+                            {
+                                <h6 class="text-danger fw-bold small text-uppercase mt-4 mb-2"> Worst Characters</h6>
+                                @foreach(var c in worst) {
+                                    <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
+                                        <span class="text-white fw-bold">• @c.CharacterName</span> 
+                                        <span class="text-danger fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                                    </div>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-muted small text-center">No characters recorded.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            
+            <div class="col-md-6">
+    <div class="card bg-black border-secondary h-100">
+        <div class="card-header bg-dark text-center py-2">
+            <h5 class="mb-0 text-white">Team Synergy</h5>
+        </div>
+        <div class="card-body p-3">
+            @if (profile.TeamSynergies.Any())
+            {
+                var topTeams = profile.TeamSynergies
+                    .OrderByDescending(t => t.Ratio)
+                    .ThenByDescending(t => t.Wins)
+                    .Take(3)
+                    .ToList();
+
+                var bottomTeams = profile.TeamSynergies
+                    .OrderBy(t => t.Ratio)
+                    .ThenByDescending(t => t.Losses)
+                    .Where(t => !topTeams.Contains(t))
+                    .Take(3)
+                    .ToList();
+
+                <h6 class="text-success fw-bold small text-uppercase mb-2"> Best Teams</h6>
+                @foreach(var t in topTeams) {
+                    <div class="d-flex flex-column border-bottom border-secondary py-1 small mb-1">
+                        <span class="text-white fw-bold">@t.TeamComposition</span>
+                        <span class="text-info text-end fw-bold" style="font-size:0.75rem;">@t.Wins W - @t.Losses L (@t.Ratio%)</span>
+                    </div>
+                }
+
+                @if (bottomTeams.Any())
+                {
+                    <h6 class="text-danger fw-bold small text-uppercase mt-4 mb-2"> Worst Teams</h6>
+                    @foreach(var t in bottomTeams) {
+                        <div class="d-flex flex-column border-bottom border-secondary py-1 small mb-1">
+                            <span class="text-white fw-bold">@t.TeamComposition</span>
+                            <span class="text-danger text-end fw-bold" style="font-size:0.75rem;">@t.Wins W - @t.Losses L (@t.Ratio%)</span>
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                <div class="text-muted small text-center">No teams recorded.</div>
+            }
+        </div>
+    </div>
+</div>
+        </div>    
+
+
                 <div class="col-md-6">
                     <div class="card bg-black border-secondary">
                         <div class="card-header bg-dark text-center py-2">
-                            <h5 class="mb-0 text-white">Character Bag</h5>
+                            <h5 class="mb-0 text-white">Full Bag Of Characters</h5>
                         </div>
                         <div class="card-body p-3">
                             @if (profile.PlayedCharacters.Any())
                             {
-                                @foreach(var c in profile.PlayedCharacters) {
+                                var characterList = profile.PlayedCharacters
+                                    .OrderByDescending(c => c.Wins);
+                                
+                                @foreach(var c in characterList) {
                                     <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
                                         <span class="text-white fw-bold" >• @c.CharacterName</span> 
                                         <span class="text-info">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
@@ -174,60 +276,7 @@
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-md-6">
-    <div class="card bg-black border-secondary">
-        <div class="card-header bg-dark text-center py-2">
-            <h5 class="mb-0 text-white">Character Performance</h5>
-        </div>
-        <div class="card-body p-3">
-            @if (profile.PlayedCharacters.Any())
-            {
-                // 1. Grab the Top 5 by highest Ratio, then by most Wins
-                var top5 = profile.PlayedCharacters
-                    .OrderByDescending(c => c.Ratio)
-                    .ThenByDescending(c => c.Wins)
-                    .Take(5)
-                    .ToList();
-
-                // 2. Grab the Bottom 5 by lowest Ratio, then by most Losses
-                // The .Where() prevents characters from showing up in both lists if the player has a small pool
-                var bottom5 = profile.PlayedCharacters
-                    .OrderBy(c => c.Ratio)
-                    .ThenByDescending(c => c.Losses)
-                    .Where(c => !top5.Contains(c))
-                    .Take(5)
-                    .ToList();
-
-                <h6 class="text-success fw-bold small text-uppercase mb-2">🔥 Top 5 Performers</h6>
-                @foreach(var c in top5) {
-                    <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                        <span class="text-white fw-bold">• @c.CharacterName</span> 
-                        <span class="text-success fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
-                    </div>
-                }
-
-                @if (bottom5.Any())
-                {
-                    <h6 class="text-danger fw-bold small text-uppercase mt-4 mb-2">📉 Bottom 5 Performers</h6>
-                    @foreach(var c in bottom5) {
-                        <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                            <span class="text-white fw-bold">• @c.CharacterName</span> 
-                            <span class="text-danger fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
-                        </div>
-                    }
-                }
-            }
-            else
-            {
-                <div class="text-muted small text-center">No characters recorded.</div>
-            }
-        </div>
-    </div>
-</div>
-        
-        
+         
 }
 
     else
@@ -594,6 +643,7 @@
         public int PlayerStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
         public List<CharacterRecord> PlayedCharacters { get; set; } = new();
+        public List<TeamRecord> TeamSynergies { get; set; } = new();
     }
 
     public class TeamRecord
@@ -651,7 +701,8 @@
                          ?? new PlayerRecord { PlayerName = targetPlayer };
         
         var characterMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
-
+        var teamMap = new Dictionary<string, TeamRecord>(StringComparer.OrdinalIgnoreCase); 
+        
         foreach (var match in historicalMatches)
         {
             if (match.Team1Names == null || match.Team2Names == null) continue;
@@ -667,6 +718,15 @@
             var myTeamNames = playerTeam == 1 ? match.Team1Names : match.Team2Names;
             var myTeamRoster = playerTeam == 1 ? match.Team1Roster : match.Team2Roster;
             
+            string teamKey = string.Join(" & ", myTeamNames.OrderBy(n => n));
+            if (!teamMap.TryGetValue(teamKey, out var teamRecord))
+            {
+                teamRecord = new TeamRecord { TeamComposition = teamKey };
+                teamMap[teamKey] = teamRecord;
+            }
+            if (isWin) teamRecord.Wins++; else teamRecord.Losses++;
+
+            // --- TRACK CHARACTER USAGE ---
             int playerIndex = myTeamNames.FindIndex(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
             if (playerIndex >= 0)
             {
@@ -683,7 +743,9 @@
                 }
             }
         }
+    
         playerData.PlayedCharacters = characterMap.Values.OrderByDescending(c => c.Wins + c.Losses).ToList();
+        playerData.TeamSynergies = teamMap.Values.OrderByDescending(t => t.Wins + t.Losses).ToList(); // ASSIGN TEAMS
         
         return playerData;
     }
