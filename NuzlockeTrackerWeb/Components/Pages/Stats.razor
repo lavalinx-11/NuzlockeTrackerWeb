@@ -163,16 +163,15 @@
                                 .ThenByDescending(c => c.Ratio)
                                 .Take(5)
                                 .ToList();
-
              
                             var worst = profile.PlayedCharacters
-                                .OrderBy(c => c.Losses)
-                                .ThenByDescending(c => c.Ratio)
+                                .OrderBy(c => c.Ratio)
+                                .ThenByDescending(c => c.Losses)
                                 .Where(c => !best.Contains(c))
                                 .Take(5)
                                 .ToList();
 
-                            <h6 class="text-success fw-bold small text-uppercase mb-2"> Best Characters </h6>
+                            <h6 class="text-info fw-bold small text-uppercase mb-2"> Best Characters </h6>
                             @foreach(var c in best) {
                                 <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
                                     <span class="text-white fw-bold">• @c.CharacterName</span> 
@@ -221,7 +220,7 @@
                     .Take(3)
                     .ToList();
 
-                <h6 class="text-success fw-bold small text-uppercase mb-2"> Best Teams</h6>
+                <h6 class="text-info fw-bold small text-uppercase mb-2"> Best Teams</h6>
                 @foreach(var t in topTeams) {
                     <div class="d-flex flex-column border-bottom border-secondary py-1 small mb-1">
                         <span class="text-white fw-bold">@t.TeamComposition</span>
