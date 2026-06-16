@@ -242,7 +242,7 @@
             <tbody>
             @foreach (var stat in playerRankings)
             {
-                <tr @onclick="() => activePlayerStats = stat.PlayerName" style="cursor: pointer;" class="align-middle"></tr>
+                <tr @onclick="() => activePlayerStats = stat.PlayerName" style="cursor: pointer;" class="align-middle">
                     <td class="fw-bold text-info text-start ps-4">
                         <button class="btn btn-sm btn-outline-info me-2">📊</button> @stat.PlayerName
                     </td>
@@ -257,7 +257,8 @@
                             <span class="text-white">@stat.PlayerStreak</span>
                         }
                     </td>
-                    <td class="fw-bold text-info">@stat.Ratio%</td>
+                <td class="fw-bold text-info">@stat.Ratio%</td>
+                </tr>
             }
             </tbody>
         </table>
