@@ -10,48 +10,97 @@
  <div class="container py-4">
     @* The HTML UI checks our renamed variables to decide what layout to show *@
     @if (_activeDetailedMatch != null)
-    
-    {
-        <div class="card bg-dark text-light border-secondary p-4">
-            <button class="btn btn-outline-secondary mb-3" @onclick="() => _activeDetailedMatch = null"> ← Back to Match History </button>
-            <div class="row align-items-center">
+{
+    <div class="card bg-dark text-light border-secondary p-4">
+        <button class="btn btn-outline-secondary mb-3 align-self-start" @onclick="() => _activeDetailedMatch = null"> ← Back to Match History </button>
+        
+        <div class="row align-items-center text-center mb-3">
             <h3>Match Details</h3>
             <p class="mb-1 text-white-50">Date Played:</p>
-            <p class="text-warning fw-bold">@_activeDetailedMatch.MatchDate.ToString("yyyy-mm-dd")</p>
+            <p class="text-warning fw-bold">@_activeDetailedMatch.MatchDate.ToString("yyyy-MM-dd")</p>
+            
             <div class="col-5">
-                        @foreach(var name in _activeDetailedMatch.Team1Names) {
-                            <h3 class="badge bg-info text-dark fs-4 m-1">@name</h3>
-                        }
-                    </div>
-                    <div class="col-2">
-                        <div class="display-3 fw-bold text-warning" style="text-shadow: 0 0 15px rgba(255,193,7,0.4);">
-                            @_activeDetailedMatch.Team1Rounds - @_activeDetailedMatch.Team2Rounds
-                        </div>
-                    </div>
-                    <div class="col-5">
-                        @foreach(var name in _activeDetailedMatch.Team2Names) {
-                            <h3 class="badge bg-danger text-white fs-4 m-1">@name</h3>
-                        }
-                    </div>
+                @foreach(var name in _activeDetailedMatch.Team1Names) {
+                    <h3 class="badge bg-info text-dark fs-4 m-1">@name</h3>
+                }
+            </div>
+            <div class="col-2">
+                <div class="display-3 fw-bold text-warning" style="text-shadow: 0 0 15px rgba(255,193,7,0.4);">
+                    @_activeDetailedMatch.Team1Rounds - @_activeDetailedMatch.Team2Rounds
                 </div>
             </div>
-        <div class="card-body bg-black p-4">
-            <div class="row">
-                <div class="col-6 border-end border-secondary">
-                    <h6 class="text-info mb-3">ROSTER</h6>
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach(var c in _activeDetailedMatch.Team1Roster){ <span class="badge border border-info text-info">@c</span> }
-                    </div>
+            <div class="col-5">
+                @foreach(var name in _activeDetailedMatch.Team2Names) {
+                    <h3 class="badge bg-danger text-white fs-4 m-1">@name</h3>
+                }
+            </div>
+        </div>
+
+        @* --- NEW BANNED CHARACTERS SECTION --- *@
+        @if (_activeDetailedMatch.BanList != null && _activeDetailedMatch.BanList.Any())
+        {
+            <div class="border-top border-secondary pt-3 text-center">
+                <h6 class="text-uppercase tracking-wider text-danger fw-bold mb-2" style="font-size: 0.85rem; letter-spacing: 1px;">
+                    🚫 Banned Characters
+                </h6>
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    @foreach (var bannedChar in _activeDetailedMatch.BanList)
+                    {
+                        <span class="badge bg-black border border-danger text-danger px-3 py-2 fw-bold">
+                            @bannedChar
+                        </span>
+                    }
                 </div>
-                <div class="col-6 text-end">
-                    <h6 class="text-danger mb-3">ROSTER</h6>
-                    <div class="d-flex flex-wrap gap-2 justify-content-end">
-                        @foreach(var c in _activeDetailedMatch.Team2Roster){ <span class="badge border border-danger text-danger">@c</span> }
-                    </div>
+            </div>
+        }
+    </div>
+
+    @* --- DETAILED ROSTER SELECTION GRID --- *@
+    <div class="card-body bg-black p-4 rounded-bottom border border-top-0 border-secondary">
+        <div class="row">
+            <!-- Team 1 Selections -->
+            <div class="col-6 border-end border-secondary">
+                <h6 class="text-info mb-3 fw-bold">TEAM 1 PICKS</h6>
+                <div class="d-flex flex-column gap-2">
+                    @for (int i = 0; i < _activeDetailedMatch.Team1Names.Count; i++)
+                    {
+                        var player = _activeDetailedMatch.Team1Names[i];
+                        // Safeguard against missing roster data if an index is out of bounds
+                        var character = (_activeDetailedMatch.Team1Roster != null && _activeDetailedMatch.Team1Roster.Count > i) 
+                                        ? _activeDetailedMatch.Team1Roster[i] 
+                                        : "Unknown Character";
+
+                        <div class="d-flex align-items-center gap-2 bg-dark p-2 rounded border border-info-subtle">
+                            <span class="badge bg-info text-dark fw-bold">@player</span>
+                            <span class="text-white-50">→</span>
+                            <span class="text-info fw-bold">@character</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Team 2 Selections -->
+            <div class="col-6">
+                <h6 class="text-danger mb-3 fw-bold text-end">TEAM 2 PICKS</h6>
+                <div class="d-flex flex-column gap-2 align-items-end">
+                    @for (int i = 0; i < _activeDetailedMatch.Team2Names.Count; i++)
+                    {
+                        var player = _activeDetailedMatch.Team2Names[i];
+                        var character = (_activeDetailedMatch.Team2Roster != null && _activeDetailedMatch.Team2Roster.Count > i) 
+                                        ? _activeDetailedMatch.Team2Roster[i] 
+                                        : "Unknown Character";
+
+                        <div class="d-flex align-items-center gap-2 bg-dark p-2 rounded border border-danger-subtle justify-content-end w-100">
+                            <span class="text-danger fw-bold">@character</span>
+                            <span class="text-white-50">←</span>
+                            <span class="badge bg-danger text-white fw-bold">@player</span>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
-    }
+    </div>
+}
     
     else
     {
