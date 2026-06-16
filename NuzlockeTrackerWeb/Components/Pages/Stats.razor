@@ -142,8 +142,8 @@
             <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-3 mb-4">
                 <div>
                     <h2 class="text-info fw-bold mb-0">@activePlayerStats</h2>
-                    <span class="text-white-50">Record: </span>
-                    <span class="text-info fw-bold">@profile.Wins W</span> - <span class="text-danger fw-bold">@profile.Losses L</span>
+                    <h2 class="text-white-50">Record: </h2>
+                    <h2 class="text-info fw-bold">@profile.Wins W</h2> - <h2 class="text-danger fw-bold">@profile.Losses L</h2>
                 </div>
                 <button class="btn btn-outline-secondary" @onclick="() => activePlayerStats = null">
                     ← Back to Leaderboards
@@ -161,7 +161,7 @@
                             {
                                 @foreach(var c in profile.PlayedCharacters) {
                                     <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
-                                        <span>• @c.CharacterName</span> 
+                                        <span class="text-white fw-bold" >• @c.CharacterName</span> 
                                         <span class="text-info">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
                                     </div>
                                 }
@@ -175,6 +175,59 @@
                 </div>
             </div>
         </div>
+        
+        <div class="col-md-6">
+    <div class="card bg-black border-secondary">
+        <div class="card-header bg-dark text-center py-2">
+            <h5 class="mb-0 text-white">Character Performance</h5>
+        </div>
+        <div class="card-body p-3">
+            @if (profile.PlayedCharacters.Any())
+            {
+                // 1. Grab the Top 5 by highest Ratio, then by most Wins
+                var top5 = profile.PlayedCharacters
+                    .OrderByDescending(c => c.Ratio)
+                    .ThenByDescending(c => c.Wins)
+                    .Take(5)
+                    .ToList();
+
+                // 2. Grab the Bottom 5 by lowest Ratio, then by most Losses
+                // The .Where() prevents characters from showing up in both lists if the player has a small pool
+                var bottom5 = profile.PlayedCharacters
+                    .OrderBy(c => c.Ratio)
+                    .ThenByDescending(c => c.Losses)
+                    .Where(c => !top5.Contains(c))
+                    .Take(5)
+                    .ToList();
+
+                <h6 class="text-success fw-bold small text-uppercase mb-2">🔥 Top 5 Performers</h6>
+                @foreach(var c in top5) {
+                    <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
+                        <span class="text-white fw-bold">• @c.CharacterName</span> 
+                        <span class="text-success fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                    </div>
+                }
+
+                @if (bottom5.Any())
+                {
+                    <h6 class="text-danger fw-bold small text-uppercase mt-4 mb-2">📉 Bottom 5 Performers</h6>
+                    @foreach(var c in bottom5) {
+                        <div class="d-flex justify-content-between border-bottom border-secondary py-1 small">
+                            <span class="text-white fw-bold">• @c.CharacterName</span> 
+                            <span class="text-danger fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                        </div>
+                    }
+                }
+            }
+            else
+            {
+                <div class="text-muted small text-center">No characters recorded.</div>
+            }
+        </div>
+    </div>
+</div>
+        
+        
 }
 
     else
@@ -593,6 +646,7 @@
 
     private PlayerRecord GetPlayerData(string targetPlayer)
     {
+        
         var playerData = playerRankings.FirstOrDefault(p => p.PlayerName.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)) 
                          ?? new PlayerRecord { PlayerName = targetPlayer };
         
@@ -614,7 +668,7 @@
             var myTeamRoster = playerTeam == 1 ? match.Team1Roster : match.Team2Roster;
             
             int playerIndex = myTeamNames.FindIndex(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
-            if (myTeamRoster != null && playerIndex >= 0)
+            if (playerIndex >= 0)
             {
                 var playerCharacters = myTeamRoster.Skip(playerIndex * 5).Take(5).Where(c => !string.IsNullOrWhiteSpace(c));
                 foreach (var character in playerCharacters)
