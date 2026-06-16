@@ -64,7 +64,7 @@ public static class CharacterData
         new Character("War Sasuke","Naruto", 57, CharacterTier.Null),
         new Character("Minato","Naruto", 58, CharacterTier.Null),
         new Character("Madara","Naruto", 59, CharacterTier.Z),
-        new Character("PTS Ichigo","Bleach", 60, CharacterTier.Null),
+        new Character("PTS Ichigo","Bleach", 60, CharacterTier.S),
         new Character("Rukia","Bleach", 61, CharacterTier.Null),
         new Character("Shinji","Bleach", 62, CharacterTier.Null),
         new Character("Byakuya","Bleach", 63, CharacterTier.Null),
@@ -187,10 +187,10 @@ public static class CharacterData
         new Character("Raiden","MGS", 180, CharacterTier.Null),
         new Character("Netero","HXH", 181, CharacterTier.S),
         new Character("Meruem","HXH", 182, CharacterTier.Z),
-        new Character("Jogo","JJK", 183, CharacterTier.Null),
+        new Character("Jogo","JJK", 183, CharacterTier.Z),
         new Character("Edward Elric","Misc", 184, CharacterTier.Null),
         new Character("Boa Hancock","One Piece", 185, CharacterTier.Null),
-        new Character("2B","Anime?", 186, CharacterTier.Null),
+        new Character("2B","Anime?", 186, CharacterTier.Z),
         new Character("Shadow Dummy","Anime?", 187, CharacterTier.Null),
         new Character("Raiden 2","MGS", 188, CharacterTier.Null)
     };

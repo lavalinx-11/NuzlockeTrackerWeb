@@ -362,7 +362,7 @@
     private readonly List<string> RotatingPool = new() {
         "Kazuma", "Misaka", "Usopp", "Crocodile", "Enel", "Jiren", "Yoshikage Kira", "Hol Horse", "Ishtar", "Meruem",
         "Morel","Madara", "PTS Luffy", "TS Luffy", "TS Zoro", "TS Sanji", "Kizaru", "Akainu", "Arlong", "Namek Goku", 
-        "Android Vegeta", "Piccolo", "Krillin", "Buu Goku", "Trunks", "Caulifla", "Majin Vegeta", "Vegeto", "Frieza", 
+        "Android Vegeta", "Piccolo", "Krillin", "Buu Goku", "Trunks", "Caulifla", "Majin Vegeta", "Vegito", "Frieza", 
         "Pui Pui", "Cell", "Super Goku", "Super Vegeta", "Gogeta", "Bardock", "Broly", "Goku Black", "PTS Naruto", 
         "PTS Sasuke", "Kakashi", "Zabuza", "Gaara", "TS Naruto", "Itachi", "Pain", "Guy", "PTS Ichigo", "Rukia", "Grimmjow",
         "Starrk", "Toshiro", "Ulquiorra", "TS Ichigo", "Yoruichi", "Kenpachi", "Aizen", "Yhwach", "Yamamoto", "Rikka", "Afro",
@@ -691,7 +691,16 @@
     var searchedChar = CharacterData.MasterList.AsEnumerable();
     if (!string.IsNullOrEmpty(selectedSeries)) searchedChar = searchedChar.Where(c => c.Series == selectedSeries);
     if (!string.IsNullOrWhiteSpace(searchQuery)) searchedChar = searchedChar.Where(c => c.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase) || c.Series.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
-    return searchedChar.Take(40);
+    if (!string.IsNullOrWhiteSpace(selectedTier))
+    {
+        if (Enum.TryParse<CharacterTier>(selectedTier, out var parsedTier))
+        {
+            searchedChar = searchedChar.Where(c => c.Tier == parsedTier);
+        }
+    }
+    
+    // The amount of characters that appear in the menu
+    return searchedChar.Take(200);
     }
 
     private void InitializeSetup() { if (matchSession != null) { GenerateBans(); matchSession.View = "setup"; UpdateUnassignedList(); matchSession.Notify(); } }
