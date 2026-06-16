@@ -4,7 +4,6 @@
 @using Microsoft.EntityFrameworkCore
 @using NuzlockeTrackerWeb.Components.GameData
 @inject IDbContextFactory<AppDbContext> DbFactory
-@inject NavigationManager NavManager
 
 
  <div class="container py-4">
@@ -35,8 +34,8 @@
             </div>
         </div>
 
-        @* --- NEW BANNED CHARACTERS SECTION --- *@
-        @if (activeDetailedMatch.BanList != null && activeDetailedMatch.BanList.Any())
+        @* --- BANNED CHARACTERS --- *@
+        @if (activeDetailedMatch.BanList.Any())
         {
             <div class="border-top border-secondary pt-3 text-center">
                 <h6 class="text-uppercase tracking-wider text-danger fw-bold mb-2" style="font-size: 0.85rem; letter-spacing: 1px;">
@@ -54,10 +53,10 @@
         }
     </div>
 
-    @* --- DETAILED ROSTER SELECTION GRID --- *@
+    @* --- PLAYER CHARACTER PICKS --- *@
     <div class="card-body bg-black p-4 rounded-bottom border border-top-0 border-secondary">
         <div class="row">
-           <!-- Team 1 Selections -->
+           <!-- Team 1 Picks -->
 <div class="col-6 border-end border-secondary">
     <h6 class="text-info mb-3 fw-bold">TEAM 1 PICKS</h6>
     <div class="d-flex flex-column gap-3">
@@ -65,7 +64,7 @@
         {
             var player = activeDetailedMatch.Team1Names[i];
             
-            @* Extract the 5 characters belonging to this specific player index *@
+           @* --- The 5 Characters Picked By This Player --- *@
             var playerCharacters = activeDetailedMatch.Team1Roster?
                 .Skip(i * 5)
                 .Take(5)
@@ -94,14 +93,16 @@
     </div>
 </div>
 
-<!-- Team 2 Selections -->
+            <!-- Team 2 Picks -->
 <div class="col-6">
     <h6 class="text-danger mb-3 fw-bold text-end">TEAM 2 PICKS</h6>
     <div class="d-flex flex-column gap-3 align-items-end">
+        
+        @* --- The 5 Characters Picked By This Player --- *@
         @for (int i = 0; i < activeDetailedMatch.Team2Names.Count; i++)
         {
             var player = activeDetailedMatch.Team2Names[i];
-            
+
             var playerCharacters = activeDetailedMatch.Team2Roster?
                 .Skip(i * 5)
                 .Take(5)
@@ -144,17 +145,17 @@
                 <div class="card bg-dark border-info text-light shadow h-100">
                     <div class="card-header border-info bg-black d-flex justify-content-between align-items-center p-0">
                         <div class="btn-group w-100">
-                            <button class="btn @(currentStatsCategory == "players" ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => currentStatsCategory = "players"'>👤 Players</button>
-                            <button class="btn @(currentStatsCategory == "teams" ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => currentStatsCategory = "teams"'>👥 Teams</button>
-                            <button class="btn @(currentStatsCategory == "characters" ? "btn-info" : "btn-dark")" 
-                                    @onclick='() => currentStatsCategory = "characters"'>👥 Characters</button>
+                            <button class="btn @(statsCategory == StatsCategory.Players ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => statsCategory = StatsCategory.Characters'>👤 Players</button>
+                            <button class="btn @(statsCategory == StatsCategory.Teams ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => statsCategory = StatsCategory.Teams'>👥 Teams</button>
+                            <button class="btn @(statsCategory == StatsCategory.Characters ? "btn-info" : "btn-dark")" 
+                                    @onclick='() => statsCategory = StatsCategory.Characters'>👥 Characters</button>
                         </div>
                     </div>
 
                    <div class="card-body p-0">
-    @if (currentStatsCategory == "players") 
+    @if (statsCategory == StatsCategory.Players) 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
             <thead><tr><th>Player</th><th>W - L</th><th>Streak</th><th>Ratio</th></tr></thead>
@@ -173,7 +174,7 @@
             </tbody>
         </table>
     } 
-    else if (currentStatsCategory == "teams") 
+    else if (statsCategory == StatsCategory.Teams) 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
             <thead><tr><th>Squad Composition</th><th>Wins</th><th>Losses</th><th>Win Rate</th></tr></thead>
@@ -183,13 +184,17 @@
                     <td class="fw-bold text-warning">@team.TeamComposition</td>
                     <td class="text-info">@team.Wins</td>
                     <td class="text-danger">@team.Losses</td>
+                    <td>
+                        @if (team.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @team.CurrentStreak</span> }
+                        else { <span class="text-white">@team.CurrentStreak</span> }
+                    </td>
                     <td class="text-info">@team.Ratio%</td>
                 </tr>
             }
             </tbody>
         </table>
     } 
-    else if (currentStatsCategory == "characters") 
+    else if (statsCategory == StatsCategory.Characters) 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
             <thead>
@@ -201,12 +206,16 @@
             </tr>
             </thead>
             <tbody>
-            @foreach (var hero in characterRecords) {
+            @foreach (var character in characterRecords) {
                 <tr>
-                    <td class="fw-bold text-white">@hero.CharacterName</td>
-                    <td class="text-info">@hero.Wins</td>
-                    <td class="text-danger">@hero.Losses</td>
-                    <td class="fw-bold text-warning">@hero.Ratio%</td>
+                    <td class="fw-bold text-white">@character.CharacterName</td>
+                    <td class="text-info">@character.Wins</td>
+                    <td class="text-danger">@character.Losses</td>
+                    <td>
+                        @if (character.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @character.CurrentStreak</span> }
+                        else { <span class="text-white">@character.CurrentStreak</span> }
+                    </td>
+                    <td class="fw-bold text-warning">@character.Ratio%</td>
                 </tr>
             }
             }
@@ -233,6 +242,7 @@
                 </div>
             </div>
 
+            
             <div class="col-12">
                 <div class="card bg-dark border-secondary text-light shadow">
                     <div class="card-header bg-black"><h5>Full Match History</h5></div>
@@ -240,8 +250,7 @@
                         <div class="list-group list-group-flush">
                             @for (int i = historicalMatches.Count - 1; i >= 0; i--) {
                                 var match = historicalMatches[i];
-                                var idx = i;
-                                <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3"@onclick="() => activeDetailedMatch = match">
+                                <button class="list-group-item list-group-item-action bg-dark text-light border-secondary p-3" @onclick="() => activeDetailedMatch = match">
         <div class="row align-items-center">
             <div class="col-4">
                 @foreach (var name in match.Team1Names)
@@ -272,16 +281,23 @@
     }
     
     @code {
+
+        public enum StatsCategory
+        {
+            Players,
+            Teams,
+            Characters
+        }
         private string activeCharSortColumn = "ratio"; 
         private bool isCharSortDescending = true;
         
     private List<MatchResult> historicalMatches = new();
-    private MatchResult? activeDetailedMatch = null;
-    private string currentStatsCategory = "players"; 
-    
-    private List<PlayerLeaderboardEntry> playerRankings = new();
-    private List<TeamCompositionRecord> teamRecords = new();
-    private List<CharacterWinRateRecord> characterRecords = new();
+    private MatchResult? activeDetailedMatch;
+    private string currentStatsCategory = "players";
+    private StatsCategory statsCategory;
+    private List<PlayerRecord> playerRankings = new();
+    private List<TeamRecord> teamRecords = new();
+    private List<CharacterRecord> characterRecords = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -289,33 +305,28 @@
         
         var matchesFromDatabase = await db.Matches
             .OrderByDescending(m => m.Id)
-            .Take(50) 
+            .Take(100) 
             .ToListAsync();
 
         historicalMatches = matchesFromDatabase;
-        playerRankings = RunPlayerMathEngine(historicalMatches);
-        teamRecords = RunTeamMathEngine(historicalMatches);
-        characterRecords = RunCharacterMathEngine(historicalMatches); 
+        playerRankings = PlayerWinRate(historicalMatches);
+        teamRecords = TeamWinRate(historicalMatches);
+        characterRecords = CharacterWinRate(historicalMatches); 
     }
 
-    // --- Cleaned up logic loops from your old page ---
-    private List<PlayerLeaderboardEntry> RunPlayerMathEngine(List<MatchResult> history)
+    private List<PlayerRecord> PlayerWinRate(List<MatchResult> history)
     {
-        // 1. Temporary dictionary to track players as we loop through matches
-        var playerMap = new Dictionary<string, PlayerLeaderboardEntry>(StringComparer.OrdinalIgnoreCase);
+        var playerMap = new Dictionary<string, PlayerRecord>(StringComparer.OrdinalIgnoreCase);
 
-        // 2. Process matches from oldest to newest (helpful if you calculate consecutive streaks later)
         foreach (var match in history.AsEnumerable().Reverse())
         {
-            // Safe check: skip processing if names lists are null
             if (match.Team1Names == null || match.Team2Names == null) continue;
 
-            // Process every player on Team 1
             foreach (var name in match.Team1Names)
             {
                 if (!playerMap.TryGetValue(name, out var entry))
                 {
-                    entry = new PlayerLeaderboardEntry { PlayerName = name };
+                    entry = new PlayerRecord { PlayerName = name };
                     playerMap[name] = entry;
                 }
 
@@ -327,16 +338,15 @@
                 else
                 {
                     entry.Losses++;
-                    entry.CurrentStreak = 0; // Streak broken
+                    entry.CurrentStreak = 0; 
                 }
             }
 
-            // Process every player on Team 2
             foreach (var name in match.Team2Names)
             {
                 if (!playerMap.TryGetValue(name, out var entry))
                 {
-                    entry = new PlayerLeaderboardEntry { PlayerName = name };
+                    entry = new PlayerRecord { PlayerName = name };
                     playerMap[name] = entry;
                 }
 
@@ -348,21 +358,17 @@
                 else
                 {
                     entry.Losses++;
-                    entry.CurrentStreak = 0; // Streak broken
+                    entry.CurrentStreak = 0;
                 }
             }
         }
 
-        // 3. Return the results ordered by total wins descending
-        return playerMap.Values
-            .OrderByDescending(p => p.Wins)
-            .ThenByDescending(p => p.Ratio)
-            .ToList();
+        return playerMap.Values.OrderByDescending(p => p.Wins).ThenByDescending(p => p.Ratio).ToList();
     }
 
-    private List<TeamCompositionRecord> RunTeamMathEngine(List<MatchResult> history)
+    private List<TeamRecord> TeamWinRate(List<MatchResult> history)
     {
-        var teamMap = new Dictionary<string, TeamCompositionRecord>(StringComparer.OrdinalIgnoreCase);
+        var teamMap = new Dictionary<string, TeamRecord>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var match in history)
         {
@@ -373,33 +379,107 @@
             string team1Key = string.Join(" & ", match.Team1Names.OrderBy(n => n));
             string team2Key = string.Join(" & ", match.Team2Names.OrderBy(n => n));
 
-            // Process Team 1
-            if (!teamMap.TryGetValue(team1Key, out var t1Entry))
+            if (!teamMap.TryGetValue(team1Key, out var team1Stats))
             {
-                t1Entry = new TeamCompositionRecord { TeamComposition = team1Key };
-                teamMap[team1Key] = t1Entry;
+                team1Stats = new TeamRecord { TeamComposition = team1Key };
+                teamMap[team1Key] = team1Stats;
             }
-            if (match.WinningTeamSide == 1) t1Entry.Wins++;
-            else t1Entry.Losses++;
 
-            // Process Team 2
-            if (!teamMap.TryGetValue(team2Key, out var t2Entry))
+            if (match.WinningTeamSide == 1)
             {
-                t2Entry = new TeamCompositionRecord { TeamComposition = team2Key };
-                teamMap[team2Key] = t2Entry;
+                team1Stats.Wins++;
+                team1Stats.CurrentStreak++;
             }
-            if (match.WinningTeamSide == 2) t2Entry.Wins++;
-            else t2Entry.Losses++;
+            else
+            {
+                team1Stats.Losses++;
+                team1Stats.CurrentStreak = 0;
+            }
+
+            if (!teamMap.TryGetValue(team2Key, out var team2Stats))
+            {
+                team2Stats = new TeamRecord { TeamComposition = team2Key };
+                teamMap[team2Key] = team2Stats;
+            }
+
+            if (match.WinningTeamSide == 2)
+            {
+                team2Stats.Wins++;
+                team2Stats.CurrentStreak++;
+            }
+
+            else
+            {
+                team2Stats.Losses++;
+                team2Stats.CurrentStreak = 0;
+            }
+            
+            
         }
 
-        return teamMap.Values
-            .OrderByDescending(t => t.Wins)
-            .ThenByDescending(t => t.Ratio)
-            .ToList();
+        return teamMap.Values.OrderByDescending(t => t.Wins).ThenByDescending(t => t.Ratio).ToList();
     }
+    
+    private List<CharacterRecord> CharacterWinRate(List<MatchResult> history)
+    {
+        var charMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
 
-    // --- Clean, Readable Data Transfer Objects (DTOs) ---
-    public class PlayerLeaderboardEntry
+        foreach (var match in history)
+        {
+            if (match.Team1Roster == null || match.Team2Roster == null) continue;
+
+            foreach (var character in match.Team1Roster)
+            {
+                if (string.IsNullOrWhiteSpace(character)) continue;
+
+                if (!charMap.TryGetValue(character, out var record))
+                {
+                    record = new CharacterRecord { CharacterName = character };
+                    charMap[character] = record;
+                }
+
+                if (match.WinningTeamSide == 1)
+                {
+                    record.Wins++;
+                    record.CurrentStreak++;
+                }
+
+                else
+                    
+                {
+                    record.Losses++;
+                    record.CurrentStreak = 0;
+                }
+            }
+
+            foreach (var character in match.Team2Roster)
+            {
+                if (string.IsNullOrWhiteSpace(character)) continue;
+
+                if (!charMap.TryGetValue(character, out var record))
+                {
+                    record = new CharacterRecord { CharacterName = character };
+                    charMap[character] = record;
+                }
+
+                if (match.WinningTeamSide == 2)
+                {
+                    record.Wins++;
+                    record.CurrentStreak++;
+                }
+                else
+                {
+                    record.Losses++;
+                    record.CurrentStreak = 0;
+                }
+            }
+        }
+
+        // Sort by highest overall Win Rate, then total Wins for tie-breakers
+        return charMap.Values.OrderByDescending(c => c.Ratio).ThenByDescending(c => c.Wins).ToList();
+    }
+    
+    public class PlayerRecord
     {
         public string PlayerName { get; set; } = "";
         public int Wins { get; set; }
@@ -408,68 +488,25 @@
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
 
-    public class TeamCompositionRecord
+    public class TeamRecord
     {
         public string TeamComposition { get; set; } = "";
         public int Wins { get; set; }
         public int Losses { get; set; }
+        public int CurrentStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
     
-    private List<CharacterWinRateRecord> RunCharacterMathEngine(List<MatchResult> history)
-    {
-        var charMap = new Dictionary<string, CharacterWinRateRecord>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var match in history)
-        {
-            // Guard check against empty arrays or null records
-            if (match.Team1Roster == null || match.Team2Roster == null) continue;
-
-            // 1. Process Team 1 Characters
-            foreach (var character in match.Team1Roster)
-            {
-                if (string.IsNullOrWhiteSpace(character)) continue;
-
-                if (!charMap.TryGetValue(character, out var record))
-                {
-                    record = new CharacterWinRateRecord { CharacterName = character };
-                    charMap[character] = record;
-                }
-
-                if (match.WinningTeamSide == 1) record.Wins++;
-                else record.Losses++;
-            }
-
-            // 2. Process Team 2 Characters
-            foreach (var character in match.Team2Roster)
-            {
-                if (string.IsNullOrWhiteSpace(character)) continue;
-
-                if (!charMap.TryGetValue(character, out var record))
-                {
-                    record = new CharacterWinRateRecord { CharacterName = character };
-                    charMap[character] = record;
-                }
-
-                if (match.WinningTeamSide == 2) record.Wins++;
-                else record.Losses++;
-            }
-        }
-
-        // Sort by highest overall Win Rate, then total Wins for tie-breakers
-        return charMap.Values
-            .OrderByDescending(c => c.Ratio)
-            .ThenByDescending(c => c.Wins)
-            .ToList();
-    }
-
-    public class CharacterWinRateRecord
+    public class CharacterRecord
     {
         public string CharacterName { get; set; } = "";
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
+        public int CurrentStreak { get; set; }
     }
+    
+    
     private void SortCharacters(string columnName)
     {
         if (activeCharSortColumn == columnName)
@@ -497,36 +534,6 @@
         if (activeCharSortColumn != columnName) return "";
         return isCharSortDescending ? "▼" : "▲";
     }
-    // Old Player Stat Function 
-    /*private List<PlayerStat> GetPlayerStats() {
-        var stats = new Dictionary<string, PlayerStat>();
-        if (MatchSession == null) return new();
-        foreach (var match in MatchSession.MatchHistory) {
-            var winners = match.WinningTeamSide == 1 ? match.Team1Names : match.Team2Names;
-            var losers = match.WinningTeamSide == 1 ? match.Team2Names : match.Team1Names;
-            foreach (var n in winners) {
-                if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
-                stats[n].Wins++; stats[n].CurrentStreak++;
-            }
-    
-            foreach (var n in losers) {
-                if (!stats.ContainsKey(n)) stats[n] = new PlayerStat { Name = n };
-                stats[n].Losses++; stats[n].CurrentStreak = 0;
-            }
-        }
-        return stats.Values.OrderByDescending(x => x.Wins).ToList();
-    }
-
-    private List<TeamStat> GetTeamStats() {
-        var teamStats = new Dictionary<string, TeamStat>();
-        if (MatchSession == null) return new();
-        foreach (var match in MatchSession.MatchHistory) {
-            if (!teamStats.ContainsKey(match.Team1Key)) teamStats[match.Team1Key] = new TeamStat { TeamComposition = match.Team1Key };
-            if (!teamStats.ContainsKey(match.Team2Key)) teamStats[match.Team2Key] = new TeamStat { TeamComposition = match.Team2Key };
-            if (match.WinningTeamSide == 1) { teamStats[match.Team1Key].Wins++; teamStats[match.Team2Key].Losses++; }
-            else { teamStats[match.Team2Key].Wins++; teamStats[match.Team1Key].Losses++; }
-        }
-        return teamStats.Values.OrderByDescending(x => x.Wins).ToList();
-    }*/
+   
  }
 </div>
