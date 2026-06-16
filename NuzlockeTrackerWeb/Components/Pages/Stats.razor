@@ -165,8 +165,8 @@
                     <td class="fw-bold">@stat.PlayerName</td>
                     <td><span class="text-info">@stat.Wins</span> - <span class="text-danger">@stat.Losses</span></td>
                     <td>
-                        @if (stat.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @stat.CurrentStreak</span> }
-                        else { <span class="text-white">@stat.CurrentStreak</span> }
+                        @if (stat.PlayerStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @stat.PlayerStreak</span> }
+                        else { <span class="text-white">@stat.PlayerStreak</span> }
                     </td>
                     <td class="fw-bold text-info">@stat.Ratio%</td>
                 </tr>
@@ -177,7 +177,7 @@
     else if (statsCategory == StatsCategory.Teams) 
     {
         <table class="table table-dark table-hover mb-0 text-center reveal-card">
-            <thead><tr><th>Team</th><th>W - L</th><th>Streak</th><th>Ratio</th></tr></thead>
+            <thead><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Streak</th><th>Ratio</th></tr></thead>
             <tbody>
             @foreach (var team in teamRecords) {
                 <tr>
@@ -185,8 +185,8 @@
                     <td class="text-info">@team.Wins</td>
                     <td class="text-danger">@team.Losses</td>
                     <td>
-                        @if (team.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @team.CurrentStreak</span> }
-                        else { <span class="text-white">@team.CurrentStreak</span> }
+                        @if (team.TeamStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @team.TeamStreak</span> }
+                        else { <span class="text-white">@team.TeamStreak</span> }
                     </td>
                     <td class="text-info">@team.Ratio%</td>
                 </tr>
@@ -202,8 +202,8 @@
                 <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("name")'>Character Name @GetSortArrow("name")</th>
                 <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("wins")'>Wins @GetSortArrow("wins")</th>
                 <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("losses")'>Losses @GetSortArrow("losses")</th>
-                <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("ratio")'>Win Rate @GetSortArrow("ratio")</th>
                 <th style="cursor: pointer; user-select: none;" @onclick=' () => SortCharacters("streak")'> Streak </th>
+                <th style="cursor: pointer; user-select: none;" @onclick='() => SortCharacters("ratio")'>Win Rate @GetSortArrow("ratio")</th>
 
             </tr>
             </thead>
@@ -214,8 +214,8 @@
                     <td class="text-info">@character.Wins</td>
                     <td class="text-danger">@character.Losses</td>
                     <td>
-                        @if (character.CurrentStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @character.CurrentStreak</span> }
-                        else { <span class="text-white">@character.CurrentStreak</span> }
+                        @if (character.CharacterStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @character.CharacterStreak</span> }
+                        else { <span class="text-white">@character.CharacterStreak</span> }
                     </td>
                     <td class="fw-bold text-warning">@character.Ratio%</td>
                 </tr>
@@ -334,12 +334,12 @@
                 if (match.WinningTeamSide == 1)
                 {
                     entry.Wins++;
-                    entry.CurrentStreak++;
+                    entry.PlayerStreak++;
                 }
                 else
                 {
                     entry.Losses++;
-                    entry.CurrentStreak = 0; 
+                    entry.PlayerStreak = 0; 
                 }
             }
 
@@ -354,12 +354,12 @@
                 if (match.WinningTeamSide == 2)
                 {
                     entry.Wins++;
-                    entry.CurrentStreak++;
+                    entry.PlayerStreak++;
                 }
                 else
                 {
                     entry.Losses++;
-                    entry.CurrentStreak = 0;
+                    entry.PlayerStreak = 0;
                 }
             }
         }
@@ -371,7 +371,7 @@
     {
         var teamMap = new Dictionary<string, TeamRecord>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var match in history)
+        foreach (var match in history.AsEnumerable().Reverse())
         {
             if (match.Team1Names == null || match.Team2Names == null || match.Team1Names.Count == 0 || match.Team2Names.Count == 0) 
                 continue;
@@ -389,12 +389,12 @@
             if (match.WinningTeamSide == 1)
             {
                 team1Stats.Wins++;
-                team1Stats.CurrentStreak++;
+                team1Stats.TeamStreak++;
             }
             else
             {
                 team1Stats.Losses++;
-                team1Stats.CurrentStreak = 0;
+                team1Stats.TeamStreak = 0;
             }
 
             if (!teamMap.TryGetValue(team2Key, out var team2Stats))
@@ -406,13 +406,13 @@
             if (match.WinningTeamSide == 2)
             {
                 team2Stats.Wins++;
-                team2Stats.CurrentStreak++;
+                team2Stats.TeamStreak++;
             }
 
             else
             {
                 team2Stats.Losses++;
-                team2Stats.CurrentStreak = 0;
+                team2Stats.TeamStreak = 0;
             }
             
             
@@ -425,7 +425,7 @@
     {
         var charMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var match in history)
+        foreach (var match in history.AsEnumerable().Reverse())
         {
             if (match.Team1Roster == null || match.Team2Roster == null) continue;
 
@@ -442,14 +442,14 @@
                 if (match.WinningTeamSide == 1)
                 {
                     record.Wins++;
-                    record.CurrentStreak++;
+                    record.CharacterStreak++;
                 }
 
                 else
                     
                 {
                     record.Losses++;
-                    record.CurrentStreak = 0;
+                    record.CharacterStreak = 0;
                 }
             }
 
@@ -466,12 +466,12 @@
                 if (match.WinningTeamSide == 2)
                 {
                     record.Wins++;
-                    record.CurrentStreak++;
+                    record.CharacterStreak++;
                 }
                 else
                 {
                     record.Losses++;
-                    record.CurrentStreak = 0;
+                    record.CharacterStreak = 0;
                 }
             }
         }
@@ -485,7 +485,7 @@
         public string PlayerName { get; set; } = "";
         public int Wins { get; set; }
         public int Losses { get; set; }
-        public int CurrentStreak { get; set; }
+        public int PlayerStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
 
@@ -494,7 +494,7 @@
         public string TeamComposition { get; set; } = "";
         public int Wins { get; set; }
         public int Losses { get; set; }
-        public int CurrentStreak { get; set; }
+        public int TeamStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
     
@@ -504,7 +504,7 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
-        public int CurrentStreak { get; set; }
+        public int CharacterStreak { get; set; }
     }
     
     
@@ -526,7 +526,7 @@
             "name" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.CharacterName).ToList() : characterRecords.OrderBy(c => c.CharacterName).ToList(),
             "wins" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Wins).ToList() : characterRecords.OrderBy(c => c.Wins).ToList(),
             "losses" => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Losses).ToList() : characterRecords.OrderBy(c => c.Losses).ToList(),
-            "streak" => isCharSortDescending ? characterRecords.OrderByDescending(c=> c.Ratio).ToList() : characterRecords.OrderBy(c => c.CurrentStreak).ToList(),
+            "streak" => isCharSortDescending ? characterRecords.OrderByDescending(c=> c.Ratio).ToList() : characterRecords.OrderBy(c => c.CharacterStreak).ToList(),
             "ratio" or _ => isCharSortDescending ? characterRecords.OrderByDescending(c => c.Ratio).ToList() : characterRecords.OrderBy(c => c.Ratio).ToList()
         };
     }
