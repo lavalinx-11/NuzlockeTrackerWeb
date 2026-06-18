@@ -387,7 +387,7 @@
         "Pui Pui", "Cell", "Super Goku", "Super Vegeta", "Gogeta", "Bardock", "Broly", "Goku Black", "PTS Naruto",
         "PTS Sasuke", "Kakashi", "Zabuza", "Gaara", "TS Naruto", "Itachi", "Pain", "Guy", "PTS Ichigo", "Rukia", "Grimmjow",
         "Starrk", "Toshiro", "Ulquiorra", "TS Ichigo", "Yoruichi", "Kenpachi", "Aizen", "Yhwach", "Yamamoto", "Rikka", "Afro",
-        "Chika", "Ryuko", "Guts", "Asta", "Hiei", "Yusuke", "Accelerator", "Akira", "Ragna", "Alucard", "Edward", "Jotaro",
+        "Chika", "Ryuko", "Guts", "Asta", "Hiei", "Yusuke", "Accelerator", "Akira", "Alucard", "Edward", "Jotaro",
         "Giorno", "Kira", "Ghiacchio", "Risotto", "Kars", "Dio", "Doppio", "Gon", "Kurapika", "Uvogin", "Sukuna",
         "Choso", "Nanami", "Jogo", "All Might", "Endeavor", "Saber", "Gilgamesh", "Kiritsugu", "Lancer", "Mash", "Illya", "Pucci",
         "Gray", "Natsu", "Aki", "Power", "Rengoku", "Kokushibo", "Tanjiro", "Sinon", "Asuna", "Saitama", "Raiden", "Snake", "Ricardo", "Roland"
@@ -643,7 +643,7 @@
     if (matchSession == null) return;
     var rng = new Random();
     matchSession.CurrentBans = new List<string>(staticBans);
-    int banCount = (int)(RotatingPool.Count * 0.28);
+    int banCount = 50;
     matchSession.CurrentBans.AddRange(RotatingPool.OrderBy(_ => rng.Next()).Take(banCount));
     matchSession.Notify();
     }
