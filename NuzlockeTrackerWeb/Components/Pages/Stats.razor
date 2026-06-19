@@ -316,6 +316,11 @@
                         {
                             <span class="badge bg-danger text-warning rivalry-pulse">🔥 @stat.PlayerStreak</span>
                         }
+                        else if (stat.PlayerLossStreak >= 3)
+                        {
+                            <span class="badge bg-info text-info rivalry-pulse">🧊 @stat.PlayerLossStreak</span>
+
+                        }
                         else
                         {
                             <span class="text-white">@stat.PlayerStreak</span>
@@ -338,8 +343,20 @@
                     <td class="text-info">@team.Wins</td>
                     <td class="text-danger">@team.Losses</td>
                     <td>
-                        @if (team.TeamStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @team.TeamStreak</span> }
-                        else { <span class="text-white">@team.TeamStreak</span> }
+                        @if (team.TeamStreak >= 3)
+                        {
+                            <span class="badge bg-danger text-warning rivalry-pulse">🔥 @team.TeamStreak</span> 
+                            
+                        }
+                        else if (team.TeamLossStreak >= 3)
+                        {
+                            <span class="badge bg-info text-info rivalry-pulse">🧊 @team.TeamLossStreak</span>
+
+                        }
+                        else
+                        {
+                            <span class="text-white">@team.TeamStreak</span>
+                        }
                     </td>
                     <td class="text-info">@team.Ratio%</td>
                 </tr>
@@ -367,8 +384,19 @@
                     <td class="text-info">@character.Wins</td>
                     <td class="text-danger">@character.Losses</td>
                     <td>
-                        @if (character.CharacterStreak >= 3) { <span class="badge bg-danger text-warning rivalry-pulse">🔥 @character.CharacterStreak</span> }
-                        else { <span class="text-white">@character.CharacterStreak</span> }
+                        @if (character.CharacterStreak >= 3)
+                        {
+                            <span class="badge bg-danger text-warning rivalry-pulse">🔥 @character.CharacterStreak</span>
+                        }
+                        else if (character.CharacterLossStreak >= 3)
+                        {
+                            <span class="badge bg-info text-info rivalry-pulse">🧊 @character.CharacterLossStreak</span>
+
+                        }
+                        else
+                        {
+                            <span class="text-white">@character.CharacterStreak</span>
+                        }
                     </td>
                     <td class="fw-bold text-warning">@character.Ratio%</td>
                 </tr>
@@ -489,11 +517,13 @@
                 {
                     entry.Wins++;
                     entry.PlayerStreak++;
+                    entry.PlayerLossStreak = 0;
                 }
                 else
                 {
                     entry.Losses++;
-                    entry.PlayerStreak = 0; 
+                    entry.PlayerStreak = 0;
+                    entry.PlayerLossStreak++;
                 }
             }
 
@@ -509,11 +539,13 @@
                 {
                     entry.Wins++;
                     entry.PlayerStreak++;
+                    entry.PlayerLossStreak = 0;
                 }
                 else
                 {
                     entry.Losses++;
                     entry.PlayerStreak = 0;
+                    entry.PlayerLossStreak++;
                 }
             }
         }
@@ -544,11 +576,14 @@
             {
                 team1Stats.Wins++;
                 team1Stats.TeamStreak++;
+                team1Stats.TeamLossStreak = 0;
             }
             else
             {
                 team1Stats.Losses++;
                 team1Stats.TeamStreak = 0;
+                team1Stats.TeamLossStreak++;
+
             }
 
             if (!teamMap.TryGetValue(team2Key, out var team2Stats))
@@ -561,12 +596,14 @@
             {
                 team2Stats.Wins++;
                 team2Stats.TeamStreak++;
+                team2Stats.TeamLossStreak = 0;
             }
 
             else
             {
                 team2Stats.Losses++;
                 team2Stats.TeamStreak = 0;
+                team2Stats.TeamLossStreak++;
             }
             
             
@@ -597,6 +634,7 @@
                 {
                     record.Wins++;
                     record.CharacterStreak++;
+                    record.CharacterLossStreak = 0;
                 }
 
                 else
@@ -604,6 +642,7 @@
                 {
                     record.Losses++;
                     record.CharacterStreak = 0;
+                    record.CharacterLossStreak++;
                 }
             }
 
@@ -621,11 +660,13 @@
                 {
                     record.Wins++;
                     record.CharacterStreak++;
+                    record.CharacterLossStreak = 0;
                 }
                 else
                 {
                     record.Losses++;
                     record.CharacterStreak = 0;
+                    record.CharacterLossStreak++;
                 }
             }
         }
@@ -640,6 +681,7 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int PlayerStreak { get; set; }
+        public int PlayerLossStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
         public List<CharacterRecord> PlayedCharacters { get; set; } = new();
         public List<TeamRecord> TeamSynergies { get; set; } = new();
@@ -651,6 +693,7 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public int TeamStreak { get; set; }
+        public int TeamLossStreak { get; set; }
         public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
     
@@ -659,8 +702,9 @@
         public string CharacterName { get; set; } = "";
         public int Wins { get; set; }
         public int Losses { get; set; }
-        public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
         public int CharacterStreak { get; set; }
+        public int CharacterLossStreak { get; set; }
+        public int Ratio => Wins + Losses == 0 ? 0 : (Wins * 100) / (Wins + Losses);
     }
     
     
