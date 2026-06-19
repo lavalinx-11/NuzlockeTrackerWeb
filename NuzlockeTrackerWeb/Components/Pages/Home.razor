@@ -153,7 +153,7 @@
                 <div class="d-flex flex-wrap gap-1 justify-content-center mb-2">
                     @foreach (string ban in matchSession.CurrentBans.OrderBy(x => x)) { <span class="badge border border-danger text-danger">@ban</span> }
                 </div>
-                @if(IsHost) { <button class="btn btn-sm btn-outline-warning w-25 mx-auto" @onclick="GenerateBans">🔄 REROLL</button> }
+                @if(IsHost && hasRerolled == false) { <button class="btn btn-sm btn-outline-warning w-25 mx-auto" @onclick="RerollBans" >🔄 REROLL</button> }
             </div>
             }
         </div>
@@ -368,7 +368,8 @@
     // Boolean Declarations
     private bool
         isSpinning,
-        showBans;
+        showBans,
+        hasRerolled = false;
         
     private bool IsHost => matchSession?.HostId == browserId;
 
@@ -384,13 +385,15 @@
         "Kazuma", "Misaka", "Usopp", "Crocodile", "Enel", "Jiren", "Kira", "Hol Horse", "Ishtar", "Meruem",
         "Morel", "Madara", "PTS Luffy", "TS Luffy", "TS Zoro", "TS Sanji", "Kizaru", "Akainu", "Arlong", "Namek Goku",
         "Android Vegeta", "Piccolo", "Krillin", "Buu Goku", "Trunks", "Caulifla", "Majin Vegeta", "Vegito", "Frieza",
-        "Pui Pui", "Cell", "Super Goku", "Super Vegeta", "Gogeta", "Bardock", "Broly", "Goku Black", "PTS Naruto",
+        "Pui Pui", "Perfect Cell", "Super Goku", "Super Vegeta", "Gogeta", "Bardock", "Broly", "Goku Black", "PTS Naruto",
         "PTS Sasuke", "Kakashi", "Zabuza", "Gaara", "TS Naruto", "Itachi", "Pain", "Guy", "PTS Ichigo", "Rukia", "Grimmjow",
         "Starrk", "Toshiro", "Ulquiorra", "TS Ichigo", "Yoruichi", "Kenpachi", "Aizen", "Yhwach", "Yamamoto", "Rikka", "Afro",
         "Chika", "Ryuko", "Guts", "Asta", "Hiei", "Yusuke", "Accelerator", "Akira", "Alucard", "Edward", "Jotaro",
-        "Giorno", "Kira", "Ghiacchio", "Risotto", "Kars", "Dio", "Doppio", "Gon", "Kurapika", "Uvogin", "Sukuna",
+        "Giorno", "Ghiacchio", "Risotto", "Kars", "Dio", "Doppio", "Gon", "Kurapika", "Uvogin", "Sukuna",
         "Choso", "Nanami", "Jogo", "All Might", "Endeavor", "Saber", "Gilgamesh", "Kiritsugu", "Lancer", "Mash", "Illya", "Pucci",
-        "Gray", "Natsu", "Aki", "Power", "Rengoku", "Kokushibo", "Tanjiro", "Sinon", "Asuna", "Saitama", "Raiden", "Snake", "Ricardo", "Roland"
+        "Gray", "Natsu", "Aki", "Power", "Rengoku", "Kokushibo", "Tanjiro", "Sinon", "Asuna", "Saitama", "Raiden", "Snake", "Ricardo", 
+        "Roland", "Wano Law", "Gojo", "Jogo", "2B", "Shadow Dummy", "Netero", "Metal Bat", "PTS Zoro", "Todo", "All Might", "Satsuki", 
+        "Jonathan", "Kenpachi"
     ];
 
     private async Task CreateNewRoom() {
@@ -648,6 +651,11 @@
     matchSession.Notify();
     }
 
+    private void RerollBans()
+    {
+        hasRerolled = true;
+        GenerateBans();
+    }
     private string GetTeamKey(List<Player> team) => string.Join(", ", team.Select(p => p.Name).OrderBy(n => n));
 
     
