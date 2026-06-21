@@ -4,7 +4,6 @@ public static class CharacterData
 {
     public static List<Character> MasterList = new()
     {
-        new Character("Luffy", "One Piece", 1, CharacterTier.Null),
         new Character("PTS Luffy","One Piece", 1, CharacterTier.Null), 
         new Character("PTS Zoro","One Piece", 2, CharacterTier.S),
         new Character("PTS Sanji","One Piece", 3, CharacterTier.Null),
@@ -57,7 +56,7 @@ public static class CharacterData
         new Character("TS Naruto","Naruto", 50, CharacterTier.S),
         new Character("Itachi","Naruto", 51, CharacterTier.Z),
         new Character("Pain","Naruto", 52, CharacterTier.Z),
-        new Character("Guy ","Naruto", 53, CharacterTier.S),
+        new Character("Guy","Naruto", 53, CharacterTier.S),
         new Character("Ay","Naruto", 54, CharacterTier.Null),
         new Character("Kisame","Naruto", 55, CharacterTier.Z),
         new Character("Killer B","Naruto", 56, CharacterTier.Null),
