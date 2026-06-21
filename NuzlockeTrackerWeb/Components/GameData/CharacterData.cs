@@ -82,7 +82,7 @@ public static class CharacterData
         new Character("Kisuke","Bleach", 76, CharacterTier.Null),
         new Character("Rikka","Misc", 77, CharacterTier.S),
         new Character("Kazuma","Misc", 78, CharacterTier.S),
-        new Character("Afro Samurai","Misc", 79, CharacterTier.S),
+        new Character("Afro Samurai","Misc", 79, CharacterTier.Z),
         new Character("Chika","Misc", 80, CharacterTier.S),
         new Character("Soulja Boy","Misc", 81, CharacterTier.Z),
         new Character("Ryuko","Misc", 82, CharacterTier.Z),
