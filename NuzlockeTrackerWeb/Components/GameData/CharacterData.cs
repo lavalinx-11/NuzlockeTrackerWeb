@@ -191,6 +191,12 @@ public static class CharacterData
         new Character("Boa Hancock","One Piece", 185, CharacterTier.Null),
         new Character("2B","Anime?", 186, CharacterTier.Z),
         new Character("Shadow Dummy","Anime?", 187, CharacterTier.Null),
-        new Character("Raiden 2","MGS", 188, CharacterTier.Null)
+        new Character("Raiden 2","MGS", 188, CharacterTier.Null),
+        new Character("Gojo [LEGACY]","JJK", 189, CharacterTier.S),
+        new Character("Broly [LEGACY]","Dragon Ball", 190, CharacterTier.S),
+        new Character("Goku [LEGACY]","Dragon Ball", 191, CharacterTier.Null)
+
+
+
     };
 }
