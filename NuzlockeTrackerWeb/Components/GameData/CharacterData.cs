@@ -194,9 +194,11 @@ public static class CharacterData
         new Character("Raiden 2","MGS", 188, CharacterTier.Null),
         new Character("Gojo [LEGACY]","JJK", 189, CharacterTier.S),
         new Character("Broly [LEGACY]","Dragon Ball", 190, CharacterTier.S),
-        new Character("Goku [LEGACY]","Dragon Ball", 191, CharacterTier.Null)
-
-
-
+        new Character("Goku [LEGACY]","Dragon Ball", 191, CharacterTier.Null),
+        new Character("Reigen","Misc", 192, CharacterTier.S),
+        new Character("Soulja Boy 2","Misc", 193, CharacterTier.Null),
+        new Character("Baam","Misc", 194, CharacterTier.Z),
+        new Character("Akaza","Demon Slayer", 195, CharacterTier.Z),
+        new Character("Chiaotzu","Prestige", 196, CharacterTier.S)
     };
 }
