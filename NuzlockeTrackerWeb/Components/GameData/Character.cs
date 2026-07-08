@@ -2,6 +2,7 @@ namespace NuzlockeTrackerWeb.Components.GameData;
 
 public enum CharacterTier
 {
+    TakeOver,
     Z,
     S,
     Null

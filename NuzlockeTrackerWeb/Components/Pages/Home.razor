@@ -376,7 +376,7 @@
     
     // Perma Bans
     private readonly List<string> staticBans = [
-        "Denji", "Achilles", "Mr President", "Iskandar", "Shirou", "Weather Report", "Deidara", "Kisame", "Yuji", "Soulja Boy", "Gohan", "Ragna"
+        "Denji", "Achilles", "Mr President", "Iskandar", "Shirou", "Yuji", "Soulja Boy", "Ragna", "Guts"
     ];
     
     // Rotating bans
@@ -548,17 +548,36 @@
         
         int currentSTiers = player.GetSTiers();
         int currentZTiers = player.GetZTier();
-
+        
+        
+        bool choosingTakeOver = chosen.Tier == CharacterTier.TakeOver;
         bool choosingZTier = chosen.Tier == CharacterTier.Z;
         bool choosingSTier = chosen.Tier == CharacterTier.S;
-        
-        
+
+        var myTeam = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
+        bool teamHasZ = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.Z));
+        bool teamHasTakeOver = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.TakeOver));
         // Z tier per player
         if (currentZTiers == 1 && choosingZTier)
         {
             errorMessage = "You Cannot Pick More Than 1 Z-Tier Character!";
             matchSession.Notify();
             return;
+        }
+        
+        
+        if (teamHasZ && choosingTakeOver)
+        {
+            errorMessage = "You Cannot Pick A Take Over Character With A Z-Tier On Your Team!";
+            matchSession.Notify();
+            return;
+        }
+
+        if (teamHasTakeOver && choosingTakeOver)
+        {
+            errorMessage = "You Cannot Pick A Take Over Character With A Take Over On Your Team!";
+            matchSession.Notify();
+            return; 
         }
         
         if (currentSTiers >= 2 && choosingSTier){
