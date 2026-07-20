@@ -15,42 +15,39 @@
 
     <div class="container py-4">
         @if (matchSession == null) {
-        @* --- JOIN LOBBY --- *@
-        <div class="text-center mt-5 reveal-card">
-            <h1 class="display-4 fw-bold text-primary">ABA NUZLOCKE</h1>
-            <div class="card bg-dark border-primary p-4 mt-4 mx-auto" style="max-width: 400px;">
-                <button class="btn btn-primary mb-3" @onclick="CreateNewRoom">Host New Session</button>
-                <div class="input-group">
-                    <input @bind="joinCode" class="form-control bg-black text-white" placeholder="Enter Room Code" />
-                    <button class="btn btn-outline-info" @onclick="JoinRoom">Join</button>
+            <div class="text-center mt-5 reveal-card">
+                <h1 class="display-4 fw-bold text-info" style="text-shadow: 0 0 15px rgba(13, 202, 240, 0.4);">ABA NUZLOCKE</h1>
+                <div class="card bg-dark border-info shadow-glow-info p-4 mt-4 mx-auto" style="max-width: 400px;">
+                    <button class="btn btn-info fw-bold mb-3" @onclick="CreateNewRoom">Host New Session</button>
+                    <div class="input-group">
+                        <input @bind="joinCode" class="form-control bg-black text-white border-secondary" placeholder="Enter Room Code" />
+                        <button class="btn btn-outline-info" @onclick="JoinRoom">Join</button>
+                    </div>
+                    @if(!string.IsNullOrEmpty(errorMessage)) { 
+                        <div class="text-danger mt-2 small fw-bold">@errorMessage</div> 
+                    }
                 </div>
-                @if(!string.IsNullOrEmpty(errorMessage)) { 
-                    <div 
-                        class="text-danger mt-2 small">@errorMessage
-                    </div> 
-                }
             </div>
-        </div>
         }
         else if (matchSession.Stage == MatchStage.Home) {
-        @* --- SECTION: MAIN MENU --- *@
-        <div class="text-center mt-5">
-            <h1 class="display-4 fw-bold text-primary">ABA NUZLOCKE</h1>
-            <div class="card bg-black border-secondary p-2 mb-4 mx-auto" style="max-width: 200px;">
-                <small class="text-white">ROOM CODE</small>
-                <h4 class="text-warning mb-0">@matchSession.Id</h4>
+            @* --- SECTION: MAIN MENU --- *@
+            <div class="text-center mt-5">
+                <h1 class="display-4 fw-bold text-info" style="text-shadow: 0 0 15px rgba(13, 202, 240, 0.4);">ABA NUZLOCKE</h1>
+                <div class="card bg-black border-secondary p-2 mb-4 mx-auto" style="max-width: 200px;">
+                    <small class="text-white-50">ROOM CODE</small>
+                    <h4 class="text-warning mb-0 tracking-widest">@matchSession.Id</h4>
+                </div>
+                <div class="mt-4 d-grid gap-2 d-sm-block">
+                    @if (IsHost) {
+                        <button class="btn btn-info fw-bold btn-lg px-5 shadow me-sm-2" @onclick="InitializeSetup">Setup Room</button>
+                    } else {
+                        <div class="alert alert-secondary border-info text-info d-inline-block px-4 mb-0 me-sm-2">
+                            <small class="text-uppercase fw-bold">Waiting for Host...</small>
+                        </div>
+                    }
+                    <a class="btn btn-outline-info btn-lg px-5 shadow" href="/stats">View Stats</a>
+                </div>
             </div>
-            <div class="mt-4 d-grid gap-2 d-sm-block">
-                @if (IsHost) {
-                <button class="btn btn-primary btn-lg px-5 shadow me-sm-2" @onclick="InitializeSetup">Setup Room</button>
-                } else {
-                <div class="alert alert-secondary d-inline-block px-4 mb-0 me-sm-2">
-                    <small class="text-uppercase fw-bold">Waiting for Host...</small>
-                </div>
-                }
-                <a class="btn btn-outline-info btn-lg px-5 shadow" href="/stats">View Stats</a>
-                </div>
-        </div>
         }
        
       @* --- Room Setup --- *@
@@ -229,17 +226,18 @@
             
             
             @*--- The Character Buttons That You Click To Select A Character ---*@
-            <div class="d-flex flex-wrap gap-2 justify-content-center overflow-auto" style="max-height: 400px;">
+            <div class="d-flex flex-wrap gap-2 justify-content-center overflow-auto p-2" style="max-height: 400px;">
                 @foreach (Character charItem in GetFilteredCharacters()) {
                     bool isBanned = matchSession.CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
                     bool taken = matchSession.PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
-                    
+                
                     // Button Style
-                    string btnTierStyle = "btn-outline-primary";
+                    string btnTierStyle = "btn-outline-info"; // Changed from primary to info to fit the theme
                     if (!isBanned && !taken)
                     {
                         if (charItem.Tier == CharacterTier.Z) btnTierStyle = "btn-z-tier";
                         else if (charItem.Tier == CharacterTier.S) btnTierStyle = "btn-s-tier";
+                        else if (charItem.Tier == CharacterTier.TakeOver) btnTierStyle = "btn-takeover-tier";
                     }
 
                     <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled" : (taken ? "btn-secondary disabled opacity-25" : btnTierStyle))"
@@ -547,7 +545,7 @@
         
         int currentSTiers = player.GetSTiers();
         int currentZTiers = player.GetZTier();
-        
+        int maxSTiers = 3;
         
         bool choosingTakeOver = chosen.Tier == CharacterTier.TakeOver;
         bool choosingZTier = chosen.Tier == CharacterTier.Z;
@@ -578,14 +576,24 @@
             matchSession.Notify();
             return; 
         }
+
+        if (currentZTiers > 0)
+        {
+            maxSTiers = 2;
+        }
         
-        if (currentSTiers >= 2 && choosingSTier){
-            errorMessage = "You Cannot Pick More Than 2 S-Tier Characters!";
+        if (currentSTiers >= maxSTiers && choosingSTier) {
+            errorMessage = "You Cannot Pick More Than " + maxSTiers + " S-Tier Characters!";
             matchSession.Notify();
             return;
         }
-        
-  
+
+        if (currentSTiers == 3 && choosingZTier)
+        {
+            errorMessage = "You Cannot Pick A Z-Tier Character With 3 S-Tiers On Your Team!";
+            matchSession.Notify();
+        }
+      
         
         player.Roster.Add(new Character(chosen.Name, chosen.Series, charIdCounter++, chosen.Tier));
         matchSession.CurrentPickerIndex = (matchSession.CurrentPickerIndex + 1) % matchSession.PickingOrder.Count;
@@ -764,5 +772,19 @@
         }
         .btn-s-tier:hover:not(:disabled) .tier-text-glow {
             color: #000 !important;
+        }
+        
+        .btn-takeover-tier {
+            background-color: rgba(176, 38, 255, 0.15) !important;
+            border: 2px solid #b026ff !important;
+            box-shadow: 0 0 10px rgba(176, 38, 255, 0.25);
+        }
+        .btn-takeover-tier:hover:not(:disabled) {
+            background-color: #b026ff !important;
+            box-shadow: 0 0 15px rgba(176, 38, 255, 0.5);
+        }
+        .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
+            color: #fff !important;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
         }
     </style>
