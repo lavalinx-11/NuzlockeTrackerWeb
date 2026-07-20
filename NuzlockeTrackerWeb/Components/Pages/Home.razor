@@ -740,63 +740,84 @@
     
     @* --- CUSTOM HIGHLIGHT LAYER --- *@
     <style>
-    /*  GRID BACKGROUND */
-    body {
-        background-color: #0a0a0c !important;
-        /* Creates a subtle cyan-tinted dot grid */
-        background-image: radial-gradient(rgba(13, 202, 240, 0.12) 1px, transparent 1px);
-        background-size: 25px 25px;
-        background-position: 0 0;
-    }
+        /* 1. LIGHT AMBIENT BACKGROUND & MANGA LINES */
+        body {
+            background-color: #f4f6f9 !important; /* Clean, light gray/white */
+            /* Very faint diagonal speed lines to give a sense of motion */
+            background-image: repeating-linear-gradient(
+                -45deg,
+                rgba(0, 0, 0, 0.02),
+                rgba(0, 0, 0, 0.02) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+            background-attachment: fixed;
+            position: relative;
+            min-height: 100vh;
+            z-index: 0;
+        }
 
-    /* ACTION TYPOGRAPHY */
-    h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4, .display-5 {
-        font-family: 'Teko', sans-serif !important;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-    }
+        /* 2. AMBIENT ENERGY ORBS (Fills empty space beautifully) */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            width: 60vw;
+            height: 60vw;
+            max-width: 800px;
+            max-height: 800px;
+            border-radius: 50%;
+            filter: blur(120px); /* Makes them look like soft glowing light */
+            z-index: -1;
+            opacity: 0.15; /* Keeps it subtle so it doesn't distract */
+            pointer-events: none;
+        }
+        body::before {
+            top: -20%;
+            left: -10%;
+            background: #0dcaf0; /* Cyan glow for Team 1 / Info */
+        }
+        body::after {
+            bottom: -20%;
+            right: -10%;
+            background: #dc3545; /* Red glow for Team 2 / Danger */
+        }
 
-    /*  FIGHTING GAME ANGLED PANELS */
-    .card, .reveal-card {
-        /* Cuts off the bottom right corner in a sharp angle */
-        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
-        border-radius: 0 !important; /* Overrides bootstrap's soft rounding */
-        border-bottom: 3px solid var(--bs-info); /* Flat bottom edge emphasis */
-    }
+        /* 3. CLEAN, FLOATING PANELS (Replacing the jagged cuts) */
+        .card, .reveal-card {
+            border-radius: 12px !important; /* Smooth, modern corners */
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); /* Deep shadow to float above the light background */
+            border: 1px solid rgba(255, 255, 255, 0.05); /* Soft inner highlight */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
 
-    /* Angle the opposite corner for Team 2 (Danger) to create symmetry */
-    .border-danger {
-        clip-path: polygon(0 0, 100% 0, 100% 100%, 15px 100%, 0 calc(100% - 15px));
-        border-bottom: 3px solid var(--bs-danger);
-    }
+        /* 4. DYNAMIC CHARACTER HOVER & SHINE (Animations Kept) */
+        button.btn-sm {
+            position: relative;
+            overflow: hidden;
+            border-radius: 6px !important; /* Clean rounded buttons */
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
 
-    /* DYNAMIC CHARACTER HOVER & SHINE */
-    button.btn-sm {
-        position: relative;
-        overflow: hidden;
-        border-radius: 0 !important; /* Sharp corners for character buttons */
-        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
-    }
+        button.btn-sm:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.05);
+            z-index: 10;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
 
-    button.btn-sm:hover:not(:disabled) {
-        transform: translateY(-3px) scale(1.05);
-        z-index: 10;
-    }
+        /* The "Speed Line" shine that swipes across on hover */
+        button.btn-sm::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            transition: left 0.4s ease;
+        }
 
-    /* The "Speed Line" shine that swipes across on hover */
-    button.btn-sm::after {
-        content: '';
-        position: absolute;
-        top: 0; left: -100%;
-        width: 50%; height: 100%;
-        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-        transform: skewX(-25deg);
-        transition: left 0.4s ease;
-    }
-
-    button.btn-sm:hover:not(:disabled)::after {
-        left: 200%;
-    }
+        button.btn-sm:hover:not(:disabled)::after {
+            left: 200%;
+        }
 
     /* TIER HIGHLIGHTS (Including the Emerald Takeover) */
     .btn-z-tier {
