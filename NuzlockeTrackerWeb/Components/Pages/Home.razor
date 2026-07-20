@@ -14,30 +14,34 @@
         </div>
 
     <div class="container py-4">
-        @if (matchSession == null) {
-            <div class="text-center mt-5 reveal-card">
-                <h1 class="display-4 fw-bold text-info" style="text-shadow: 0 0 15px rgba(13, 202, 240, 0.4);">ABA NUZLOCKE</h1>
-                <div class="card bg-dark border-info shadow-glow-info p-4 mt-4 mx-auto" style="max-width: 400px;">
-                    <button class="btn btn-info fw-bold mb-3" @onclick="CreateNewRoom">Host New Session</button>
-                    <div class="input-group">
-                        <input @bind="joinCode" class="form-control bg-black text-white border-secondary" placeholder="Enter Room Code" />
-                        <button class="btn btn-outline-info" @onclick="JoinRoom">Join</button>
-                    </div>
-                    @if(!string.IsNullOrEmpty(errorMessage)) { 
-                        <div class="text-danger mt-2 small fw-bold">@errorMessage</div> 
-                    }
+       @if (matchSession == null) {
+        <div class="d-flex justify-content-center mt-5">
+            <div class="card bg-dark border-info shadow-glow-info p-5 reveal-card text-center" style="max-width: 600px; width: 100%;">
+                <h1 class="display-4 fw-bold text-info mb-4" style="text-shadow: 0 0 15px rgba(13, 202, 240, 0.4);">ABA NUZLOCKE</h1>
+                <button class="btn btn-info btn-lg fw-bold w-100 mb-3 shadow" @onclick="CreateNewRoom">Host New Session</button>
+                
+                <div class="input-group mt-3">
+                    <input @bind="joinCode" class="form-control form-control-lg bg-black text-white border-secondary" placeholder="Enter Room Code" />
+                    <button class="btn btn-outline-info px-4" @onclick="JoinRoom">Join</button>
                 </div>
+                @if(!string.IsNullOrEmpty(errorMessage)) { 
+                    <div class="text-danger mt-3 small fw-bold">@errorMessage</div> 
+                }
             </div>
-        }
-        else if (matchSession.Stage == MatchStage.Home) {
-            @* --- SECTION: MAIN MENU --- *@
-            <div class="text-center mt-5">
-                <h1 class="display-4 fw-bold text-info" style="text-shadow: 0 0 15px rgba(13, 202, 240, 0.4);">ABA NUZLOCKE</h1>
-                <div class="card bg-black border-secondary p-2 mb-4 mx-auto" style="max-width: 200px;">
+        </div>
+    }
+    else if (matchSession.Stage == MatchStage.Home) {
+        @* --- SECTION: MAIN MENU --- *@
+        <div class="d-flex justify-content-center mt-5">
+            <div class="card bg-dark border-secondary p-5 reveal-card text-center" style="max-width: 600px; width: 100%;">
+                <h1 class="display-4 fw-bold text-info mb-4" style="text-shadow: 0 0 15px rgba(13, 202, 240, 0.4);">ABA NUZLOCKE</h1>
+                
+                <div class="card bg-black border-secondary p-3 mb-4 mx-auto w-75">
                     <small class="text-white-50">ROOM CODE</small>
-                    <h4 class="text-warning mb-0 tracking-widest">@matchSession.Id</h4>
+                    <h3 class="text-warning mb-0 tracking-widest fw-bold">@matchSession.Id</h3>
                 </div>
-                <div class="mt-4 d-grid gap-2 d-sm-block">
+
+                <div class="d-grid gap-3 d-sm-block mt-2">
                     @if (IsHost) {
                         <button class="btn btn-info fw-bold btn-lg px-5 shadow me-sm-2" @onclick="InitializeSetup">Setup Room</button>
                     } else {
@@ -48,7 +52,8 @@
                     <a class="btn btn-outline-info btn-lg px-5 shadow" href="/stats">View Stats</a>
                 </div>
             </div>
-        }
+        </div>
+    }
        
       @* --- Room Setup --- *@
         else if (matchSession.Stage == MatchStage.Setup) {
@@ -508,18 +513,38 @@
         matchSession.Team1 = shuffled.Take(playersPerTeam).ToList();
         matchSession.Team2 = shuffled.Skip(playersPerTeam).ToList();
 
-        
+        foreach (var player in matchSession.Team1) { player.TeamNumber = 1; player.Roster.Clear(); }
+        foreach (var player in matchSession.Team2) { player.TeamNumber = 2; player.Roster.Clear(); }
+
+        // --- SNAKE DRAFT GENERATION LOGIC ---
         matchSession.PickingOrder.Clear();
-        for(int i = 0; i < playersPerTeam; i++) { 
-            matchSession.PickingOrder.Add(matchSession.Team1[i]); 
-            matchSession.PickingOrder.Add(matchSession.Team2[i]); 
+    
+        // Build base linear order for round 1 (Interleave Team 1 and Team 2)
+        List<Player> baseOrder = new List<Player>();
+        int maxPlayers = Math.Max(matchSession.Team1.Count, matchSession.Team2.Count);
+        for (int i = 0; i < maxPlayers; i++)
+        {
+            if (i < matchSession.Team1.Count) baseOrder.Add(matchSession.Team1[i]);
+            if (i < matchSession.Team2.Count) baseOrder.Add(matchSession.Team2[i]);
         }
 
-        foreach(var player in matchSession.PickingOrder) { 
-            player.Roster.Clear(); 
-            player.TeamNumber = matchSession.Team1.Contains(player) ? 1 : 2; 
+        // Generate 5 rounds of picks using Snake Ordering (Forward -> Reverse -> Forward...)
+        int totalRounds = 5; 
+        for (int round = 0; round < totalRounds; round++)
+        {
+            if (round % 2 == 0)
+            {
+                matchSession.PickingOrder.AddRange(baseOrder);
+            }
+            else
+            {
+                List<Player> reversedOrder = new List<Player>(baseOrder);
+                reversedOrder.Reverse();
+                matchSession.PickingOrder.AddRange(reversedOrder);
+            }
         }
 
+        matchSession.CurrentPickerIndex = 0;
         GenerateBans();
         isSpinning = false; 
         matchSession.Stage = MatchStage.CharacterSelect; 
@@ -741,70 +766,45 @@
     @* --- CUSTOM HIGHLIGHT LAYER --- *@
     <style>
         body {
-            background-color: #0d1117 !important; /* Deep, rich dark base */
-            /* Clean, modern drafting grid */
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            background-position: center center;
-            background-attachment: fixed;
-            position: relative;
-            min-height: 100vh;
-            z-index: 0;
+            background-color: #121212 !important; /* Rich solid dark gray */
+            color: #e0e0e0;
         }
 
-        /* 2. THE "VERSUS" ARENA LIGHTING (Fills dead space) */
-        /* Creates massive, extremely soft glows on the edges of the screen */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; bottom: 0; width: 50vw;
-            background: radial-gradient(circle at 0% 50%, rgba(13, 202, 240, 0.06) 0%, transparent 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0; right: 0; bottom: 0; width: 50vw;
-            background: radial-gradient(circle at 100% 50%, rgba(220, 53, 69, 0.06) 0%, transparent 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* 3. CLEAN PANELS */
+        /* 3. CLEAN, FLOATING PANELS */
         .card, .reveal-card {
-            border-radius: 8px !important;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.08); /* Subtle glass edge */
-            background-color: #161b22 !important; /* Slightly elevates cards off the background */
+            border-radius: 12px !important; /* Smooth, modern corners */
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Deep shadow */
+            border: 1px solid rgba(255, 255, 255, 0.08); /* Soft inner highlight */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* 4. DYNAMIC CHARACTER HOVER (Clean, no harsh cuts) */
+        /* 4. DYNAMIC CHARACTER HOVER & SHINE */
         button.btn-sm {
             position: relative;
             overflow: hidden;
             border-radius: 6px !important;
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
         }
+
         button.btn-sm:hover:not(:disabled) {
             transform: translateY(-4px) scale(1.05);
             z-index: 10;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
         }
 
-        /* Subtle shimmer effect on hover */
         button.btn-sm::after {
             content: '';
             position: absolute;
             top: 0; left: -100%;
             width: 50%; height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
             transform: skewX(-25deg);
             transition: left 0.4s ease;
         }
-        button.btn-sm:hover:not(:disabled)::after { left: 200%; }
+
+        button.btn-sm:hover:not(:disabled)::after {
+            left: 200%;
+        }
 
     /* TIER HIGHLIGHTS (Including the Emerald Takeover) */
     .btn-z-tier {
