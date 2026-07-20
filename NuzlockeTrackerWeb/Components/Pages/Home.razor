@@ -737,54 +737,109 @@
     }
     }
 
-    <style>
-        .rivalry-pulse { animation: pulse 1.5s infinite; border: 1px solid gold; }
-        .shadow-glow-info { box-shadow: 0 0 15px rgba(13, 202, 240, 0.5); }
-        @@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .animate-bounce { animation: bounce 1s infinite; }
-        @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        .slot-machine { animation: slot-flip 0.1s infinite; }
-    </style>
     
     @* --- CUSTOM HIGHLIGHT LAYER --- *@
     <style>
-        .btn-z-tier {
-            background-color: rgba(255, 193, 7, 0.15) !important;
-            border: 2px solid #ffc107 !important;
-            box-shadow: 0 0 10px rgba(255, 193, 7, 0.25);
-        }
-        .btn-z-tier:hover:not(:disabled) {
-            background-color: #ffc107 !important;
-            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
-        }
-        .btn-z-tier:hover:not(:disabled) .tier-text-glow {
-            color: #000 !important;
-        }
+    /*  GRID BACKGROUND */
+    body {
+        background-color: #0a0a0c !important;
+        /* Creates a subtle cyan-tinted dot grid */
+        background-image: radial-gradient(rgba(13, 202, 240, 0.12) 1px, transparent 1px);
+        background-size: 25px 25px;
+        background-position: 0 0;
+    }
 
-        .btn-s-tier {
-            background-color: rgba(226, 230, 234, 0.1) !important;
-            border: 2px solid #e2e6ea !important;
-            box-shadow: 0 0 10px rgba(226, 230, 234, 0.2);
-        }
-        .btn-s-tier:hover:not(:disabled) {
-            background-color: #e2e6ea !important;
-            box-shadow: 0 0 15px rgba(226, 230, 234, 0.4);
-        }
-        .btn-s-tier:hover:not(:disabled) .tier-text-glow {
-            color: #000 !important;
-        }
+    /* ACTION TYPOGRAPHY */
+    h1, h2, h3, h4, h5, h6, .display-1, .display-2, .display-3, .display-4, .display-5 {
+        font-family: 'Teko', sans-serif !important;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
 
-        .btn-takeover-tier {
-            background-color: rgba(16, 185, 129, 0.15) !important;
-            border: 2px solid #10b981 !important;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
-        }
-        .btn-takeover-tier:hover:not(:disabled) {
-            background-color: #10b981 !important;
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-        }
-        .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
-            color: #fff !important;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-        }
-    </style>
+    /*  FIGHTING GAME ANGLED PANELS */
+    .card, .reveal-card {
+        /* Cuts off the bottom right corner in a sharp angle */
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        border-radius: 0 !important; /* Overrides bootstrap's soft rounding */
+        border-bottom: 3px solid var(--bs-info); /* Flat bottom edge emphasis */
+    }
+
+    /* Angle the opposite corner for Team 2 (Danger) to create symmetry */
+    .border-danger {
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+        border-bottom: 3px solid var(--bs-danger);
+    }
+
+    /* DYNAMIC CHARACTER HOVER & SHINE */
+    button.btn-sm {
+        position: relative;
+        overflow: hidden;
+        border-radius: 0 !important; /* Sharp corners for character buttons */
+        clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+    }
+
+    button.btn-sm:hover:not(:disabled) {
+        transform: translateY(-3px) scale(1.05);
+        z-index: 10;
+    }
+
+    /* The "Speed Line" shine that swipes across on hover */
+    button.btn-sm::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 50%; height: 100%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-25deg);
+        transition: left 0.4s ease;
+    }
+
+    button.btn-sm:hover:not(:disabled)::after {
+        left: 200%;
+    }
+
+    /* TIER HIGHLIGHTS (Including the Emerald Takeover) */
+    .btn-z-tier {
+        background-color: rgba(255, 193, 7, 0.15) !important;
+        border: 2px solid #ffc107 !important;
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.25);
+    }
+    .btn-z-tier:hover:not(:disabled) {
+        background-color: #ffc107 !important;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
+    }
+    .btn-z-tier:hover:not(:disabled) .tier-text-glow { color: #000 !important; }
+
+    .btn-s-tier {
+        background-color: rgba(226, 230, 234, 0.1) !important;
+        border: 2px solid #e2e6ea !important;
+        box-shadow: 0 0 10px rgba(226, 230, 234, 0.2);
+    }
+    .btn-s-tier:hover:not(:disabled) {
+        background-color: #e2e6ea !important;
+        box-shadow: 0 0 15px rgba(226, 230, 234, 0.4);
+    }
+    .btn-s-tier:hover:not(:disabled) .tier-text-glow { color: #000 !important; }
+
+    .btn-takeover-tier {
+        background-color: rgba(16, 185, 129, 0.15) !important;
+        border: 2px solid #10b981 !important;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+    }
+    .btn-takeover-tier:hover:not(:disabled) {
+        background-color: #10b981 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+    }
+    .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
+        color: #fff !important;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+
+    /* EXISTING UTILITIES */
+    .rivalry-pulse { animation: pulse 1.5s infinite; border: 1px solid gold; }
+    .shadow-glow-info { box-shadow: 0 0 15px rgba(13, 202, 240, 0.5); }
+    @@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    .animate-bounce { animation: bounce 1s infinite; }
+    @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+    .slot-machine { animation: slot-flip 0.1s infinite; }
+</style>
