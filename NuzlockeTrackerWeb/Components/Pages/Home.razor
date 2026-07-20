@@ -558,62 +558,67 @@
     }
 
     private bool IsCharacterRestricted(Character charItem)
-    {
-        if (matchSession == null) return false;
+{
+    if (matchSession == null) return false;
 
-        if (matchSession.CurrentPickerIndex < 0 || matchSession.CurrentPickerIndex >= matchSession.PickingOrder.Count) 
-            return false;
-
-        var player = matchSession.PickingOrder[matchSession.CurrentPickerIndex];
-
-        if (player.GetSeriesCount(charItem.Series) >= 2) return true;
-
-        int currentSTiers = player.GetSTiers();
-        int currentZTiers = player.GetZTier();
-        int currentTakeOver = player.GetTakeOver();
-        int maxSTiers = 3;
-
-        bool choosingTakeOver = charItem.Tier == CharacterTier.TakeOver;
-        bool choosingZTier = charItem.Tier == CharacterTier.Z;
-        bool choosingSTier = charItem.Tier == CharacterTier.S;
-
-        var myTeam = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
-        bool teamHasZ = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.Z));
-        bool teamHasTakeOver = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.TakeOver));
-
-        // Z-Tier per player limit (Max 1)
-        if (currentZTiers >= 1 && choosingZTier) return true;
-
-        // Team constraints for Takeovers
-        if (teamHasZ && choosingTakeOver) return true;
-        if (teamHasTakeOver && choosingTakeOver) return true;
-    
-        // Cannot pick a Z-Tier if player/team has a Takeover
-        if (currentTakeOver > 0 && choosingZTier) return true;
-        if (teamHasTakeOver && choosingZTier) return true;
-
-        // Adjust max S-Tiers based on current roster composition
-        if (currentZTiers > 0)
-        {
-            maxSTiers = 2;
-        }
-
-        if (currentTakeOver > 0)
-        {
-            maxSTiers = 0;
-        }
-
-        // S-Tier constraints
-        if (currentSTiers >= maxSTiers && choosingSTier) return true;
-
-        // Cannot pick Z-Tier if player has 3 or more S-Tiers
-        if (currentSTiers >= 3 && choosingZTier) return true;
-
-        // Cannot pick a TakeOver if player has any S-Tiers
-        if (currentSTiers > 0 && choosingTakeOver) return true;
-
+    if (matchSession.CurrentPickerIndex < 0 || matchSession.CurrentPickerIndex >= matchSession.PickingOrder.Count) 
         return false;
+
+    var player = matchSession.PickingOrder[matchSession.CurrentPickerIndex];
+
+    if (player.GetSeriesCount(charItem.Series) >= 2) return true;
+
+    int currentSTiers = player.GetSTiers();
+    int currentZTiers = player.GetZTier();
+    int currentTakeOver = player.GetTakeOver();
+    int maxSTiers = 3;
+
+    bool choosingTakeOver = charItem.Tier == CharacterTier.TakeOver;
+    bool choosingZTier = charItem.Tier == CharacterTier.Z;
+    bool choosingSTier = charItem.Tier == CharacterTier.S;
+
+    var myTeam = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
+    bool teamHasZ = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.Z));
+    bool teamHasTakeOver = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.TakeOver));
+
+    // Z-Tier per player limit (Max 1)
+    if (currentZTiers >= 1 && choosingZTier) return true;
+
+    // Team constraints for Takeovers
+    if (teamHasZ && choosingTakeOver) return true;
+    if (teamHasTakeOver && choosingTakeOver) return true;
+    
+    // Cannot pick a Z-Tier if player/team has a Takeover
+    if (currentTakeOver > 0 && choosingZTier) return true;
+    if (teamHasTakeOver && choosingZTier) return true;
+
+    // Adjust max S-Tiers based on current roster composition & team rules
+    if (currentZTiers > 0)
+    {
+        maxSTiers = 2;
     }
+
+    if (currentTakeOver > 0)
+    {
+        maxSTiers = 0;
+    }
+
+    if (teamHasTakeOver)
+    {
+        maxSTiers = 1;
+    }
+        
+    // S-Tier constraints
+    if (currentSTiers >= maxSTiers && choosingSTier) return true;
+
+    // Cannot pick Z-Tier if player has 3 or more S-Tiers
+    if (currentSTiers >= 3 && choosingZTier) return true;
+
+    // Cannot pick a TakeOver if player has any S-Tiers
+    if (currentSTiers > 0 && choosingTakeOver) return true;
+
+    return false;
+}
     
     private void SelectCharacter(Character chosen) {
     
