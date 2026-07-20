@@ -235,18 +235,23 @@
                 @foreach (Character charItem in GetFilteredCharacters()) {
                     bool isBanned = matchSession.CurrentBans.Contains(charItem.Name, StringComparer.OrdinalIgnoreCase);
                     bool taken = matchSession.PickingOrder.Any(p => p.Roster.Any(c => c.Name == charItem.Name));
-                
+    
+                    // Check if the current picker is restricted from choosing this character based on your rules
+                    bool isRestricted = isMyTurn && IsCharacterRestricted(charItem);
+
                     // Button Style
-                    string btnTierStyle = "btn-outline-info"; // Changed from primary to info to fit the theme
-                    if (!isBanned && !taken)
+                    string btnTierStyle = "btn-outline-info"; 
+                    if (!isBanned && !taken && !isRestricted)
                     {
                         if (charItem.Tier == CharacterTier.Z) btnTierStyle = "btn-z-tier";
                         else if (charItem.Tier == CharacterTier.S) btnTierStyle = "btn-s-tier";
                         else if (charItem.Tier == CharacterTier.TakeOver) btnTierStyle = "btn-takeover-tier";
                     }
 
-                    <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled" : (taken ? "btn-secondary disabled opacity-25" : btnTierStyle))"
-                            style="min-width: 140px; transition: all 0.2s ease;" @onclick="() => SelectCharacter(charItem)" disabled="@(taken || isBanned || !isMyTurn)">
+                    <button class="btn btn-sm @(isBanned ? "btn-outline-danger disabled" : (taken || isRestricted ? "btn-secondary disabled opacity-25" : btnTierStyle))"
+                            style="min-width: 140px; transition: all 0.2s ease;" 
+                            @onclick="() => SelectCharacter(charItem)" 
+                            disabled="@(taken || isBanned || !isMyTurn || isRestricted)">
                         <div class="fw-bold text-white tier-text-glow">@charItem.Name</div>
                         <small class="text-white-50 tier-text-glow">@charItem.Series</small>
                     </button>
@@ -552,6 +557,45 @@
         matchSession.Notify(); 
     }
 
+    private bool IsCharacterRestricted(Character charItem)
+    {
+        if (matchSession == null) return false;
+    
+        if (matchSession.CurrentPickerIndex < 0 || matchSession.CurrentPickerIndex >= matchSession.PickingOrder.Count) 
+            return false;
+
+        var player = matchSession.PickingOrder[matchSession.CurrentPickerIndex];
+
+        if (player.GetSeriesCount(charItem.Series) >= 2) return true;
+
+        int currentSTiers = player.GetSTiers();
+        int currentZTiers = player.GetZTier();
+        int maxSTiers = 3;
+
+        bool choosingTakeOver = charItem.Tier == CharacterTier.TakeOver;
+        bool choosingZTier = charItem.Tier == CharacterTier.Z;
+        bool choosingSTier = charItem.Tier == CharacterTier.S;
+
+        var myTeam = player.TeamNumber == 1 ? matchSession.Team1 : matchSession.Team2;
+        bool teamHasZ = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.Z));
+        bool teamHasTakeOver = myTeam.Any(p => p.Roster.Any(c => c.Tier == CharacterTier.TakeOver));
+
+        if (currentZTiers >= 1 && choosingZTier) return true;
+
+        if (teamHasZ && choosingTakeOver) return true;
+        if (teamHasTakeOver && choosingTakeOver) return true;
+
+        if (currentZTiers > 0)
+        {
+            maxSTiers = 2;
+        }
+
+        if (currentSTiers >= maxSTiers && choosingSTier) return true;
+
+        if (currentSTiers == 3 && choosingZTier) return true;
+
+        return false;
+    }
     
     private void SelectCharacter(Character chosen) {
         
