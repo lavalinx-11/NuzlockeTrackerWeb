@@ -37,7 +37,11 @@ public class Player
         
         return Roster.Count(c => c.Tier == CharacterTier.Z);
     }
-    
+
+    public int GetTakeOver()
+    {
+        return Roster.Count(c => c.Tier == CharacterTier.TakeOver);
+    }
        
     
 }
