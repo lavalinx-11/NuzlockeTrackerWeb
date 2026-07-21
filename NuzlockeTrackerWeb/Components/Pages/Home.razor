@@ -383,7 +383,7 @@
     
     // Perma Bans
     private readonly List<string> staticBans = [
-        "Denji", "Achilles", "Mr President", "Iskandar", "Shirou", "Yuji", "Guts", "Baam" , 
+        "Denji", "Achilles", "Mr President", "Iskandar", "Shirou", "Yuji", "Guts", "Baam" 
     ];
     
     // Rotating bans
@@ -904,7 +904,7 @@
             left: 200%;
         }
 
-    /* TIER HIGHLIGHTS (Including the Emerald Takeover) */
+    /* TIER HIGHLIGHTS  */
     .btn-z-tier {
         background-color: rgba(255, 193, 7, 0.15) !important;
         border: 2px solid #ffc107 !important;
@@ -926,20 +926,39 @@
         box-shadow: 0 0 15px rgba(226, 230, 234, 0.4);
     }
     .btn-s-tier:hover:not(:disabled) .tier-text-glow { color: #000 !important; }
+        @@keyframes rainbow-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-    .btn-takeover-tier {
-        background-color: rgba(16, 185, 129, 0.15) !important;
-        border: 2px solid #10b981 !important;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
-    }
-    .btn-takeover-tier:hover:not(:disabled) {
-        background-color: #10b981 !important;
-        box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
-    }
-    .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
-        color: #fff !important;
-        text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-    }
+        @@keyframes rainbow-border {
+            0% { border-color: #ff0000; box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
+            20% { border-color: #ff8000; box-shadow: 0 0 10px rgba(255, 128, 0, 0.4); }
+            40% { border-color: #ffff00; box-shadow: 0 0 10px rgba(255, 255, 0, 0.4); }
+            60% { border-color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.4); }
+            80% { border-color: #00ffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.4); }
+            100% { border-color: #ff00ff; box-shadow: 0 0 10px rgba(255, 0, 255, 0.4); }
+        }
+
+        .btn-takeover-tier {
+            background: linear-gradient(270deg, rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15)) !important;
+            background-size: 400% 400% !important;
+            animation: rainbow-shift 8s ease infinite, rainbow-border 6s infinite;
+            border: 2px solid #ff00ff !important;
+        }
+
+        .btn-takeover-tier:hover:not(:disabled) {
+            background: linear-gradient(270deg, rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4)) !important;
+            background-size: 400% 400% !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6) !important;
+            transform: translateY(-4px) scale(1.05);
+        }
+
+        .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
+            color: #fff !important;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 15px rgba(0, 255, 255, 0.6);
+        }
 
     /* EXISTING UTILITIES */
     .rivalry-pulse { animation: pulse 1.5s infinite; border: 1px solid gold; }
