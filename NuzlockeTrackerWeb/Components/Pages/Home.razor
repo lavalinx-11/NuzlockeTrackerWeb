@@ -863,46 +863,46 @@
     
     @* --- CUSTOM HIGHLIGHT LAYER --- *@
     <style>
-        body {
-            background-color: #121212 !important; /* Rich solid dark gray */
-            color: #e0e0e0;
-        }
+    body {
+        background-color: #121212 !important; /* Rich solid dark gray */
+        color: #e0e0e0;
+    }
 
-        /* 3. CLEAN, FLOATING PANELS */
-        .card, .reveal-card {
-            border-radius: 12px !important; /* Smooth, modern corners */
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Deep shadow */
-            border: 1px solid rgba(255, 255, 255, 0.08); /* Soft inner highlight */
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+    /* 3. CLEAN, FLOATING PANELS */
+    .card, .reveal-card {
+        border-radius: 12px !important; /* Smooth, modern corners */
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); /* Deep shadow */
+        border: 1px solid rgba(255, 255, 255, 0.08); /* Soft inner highlight */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-        /* 4. DYNAMIC CHARACTER HOVER & SHINE */
-        button.btn-sm {
-            position: relative;
-            overflow: hidden;
-            border-radius: 6px !important;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-        }
+    /* 4. DYNAMIC CHARACTER HOVER & SHINE */
+    button.btn-sm {
+        position: relative;
+        overflow: hidden;
+        border-radius: 6px !important;
+        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
 
-        button.btn-sm:hover:not(:disabled) {
-            transform: translateY(-4px) scale(1.05);
-            z-index: 10;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-        }
+    button.btn-sm:hover:not(:disabled) {
+        transform: translateY(-4px) scale(1.05);
+        z-index: 10;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    }
 
-        button.btn-sm::after {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 50%; height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-            transform: skewX(-25deg);
-            transition: left 0.4s ease;
-        }
+    button.btn-sm::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 50%; height: 100%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-25deg);
+        transition: left 0.4s ease;
+    }
 
-        button.btn-sm:hover:not(:disabled)::after {
-            left: 200%;
-        }
+    button.btn-sm:hover:not(:disabled)::after {
+        left: 200%;
+    }
 
     /* TIER HIGHLIGHTS  */
     .btn-z-tier {
@@ -926,39 +926,33 @@
         box-shadow: 0 0 15px rgba(226, 230, 234, 0.4);
     }
     .btn-s-tier:hover:not(:disabled) .tier-text-glow { color: #000 !important; }
-        @@keyframes rainbow-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+    
+    @@keyframes rainbow-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
 
-        @@keyframes rainbow-border {
-            0% { border-color: #ff0000; box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
-            20% { border-color: #ff8000; box-shadow: 0 0 10px rgba(255, 128, 0, 0.4); }
-            40% { border-color: #ffff00; box-shadow: 0 0 10px rgba(255, 255, 0, 0.4); }
-            60% { border-color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.4); }
-            80% { border-color: #00ffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.4); }
-            100% { border-color: #ff00ff; box-shadow: 0 0 10px rgba(255, 0, 255, 0.4); }
-        }
+    .btn-takeover-tier {
+        background: linear-gradient(270deg, rgba(255,0,0,0.2), rgba(255,128,0,0.2), rgba(255,255,0,0.2), rgba(0,255,0,0.2), rgba(0,255,255,0.2), rgba(255,0,255,0.2), rgba(255,0,0,0.2)) !important;
+        background-size: 600% 600% !important;
+        animation: rainbow-shift 6s linear infinite;
+        border: 2px solid #ff00ff !important;
+        box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+    }
 
-        .btn-takeover-tier {
-            background: linear-gradient(270deg, rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15)) !important;
-            background-size: 400% 400% !important;
-            animation: rainbow-shift 8s ease infinite, rainbow-border 6s infinite;
-            border: 2px solid #ff00ff !important;
-        }
+    .btn-takeover-tier:hover:not(:disabled) {
+        background: linear-gradient(270deg, rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4), rgba(255,0,0,0.4)) !important;
+        background-size: 600% 600% !important;
+        border: 2px solid #ff00ff !important;
+        box-shadow: 0 0 18px rgba(255, 0, 255, 0.6) !important;
+        transform: translateY(-4px) scale(1.05);
+    }
 
-        .btn-takeover-tier:hover:not(:disabled) {
-            background: linear-gradient(270deg, rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4)) !important;
-            background-size: 400% 400% !important;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6) !important;
-            transform: translateY(-4px) scale(1.05);
-        }
-
-        .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
-            color: #fff !important;
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 15px rgba(0, 255, 255, 0.6);
-        }
+    .btn-takeover-tier:hover:not(:disabled) .tier-text-glow {
+        color: #fff !important;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 15px rgba(255, 0, 255, 0.6);
+    }
 
     /* EXISTING UTILITIES */
     .rivalry-pulse { animation: pulse 1.5s infinite; border: 1px solid gold; }
