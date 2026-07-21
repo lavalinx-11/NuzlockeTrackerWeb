@@ -929,28 +929,21 @@
 
         @@keyframes rainbow-shift {
             0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
-        /* You can completely delete the @@keyframes rainbow-border block since you want a static pink border */
-
         .btn-takeover-tier {
-            /* CHANGED: background -> background-image */
-            background-image: linear-gradient(270deg, rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15)) !important;
-            background-size: 400% 400% !important;
-            /* CHANGED: Removed rainbow-border and added !important */
-            animation: rainbow-shift 2s ease infinite !important;
+            background-image: linear-gradient(270deg, rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15), rgba(255,0,0,0.15)) !important;
+            background-size: 200% 200% !important;
+            animation: rainbow-shift 4s linear infinite !important;
             border: 2px solid #ff00ff !important;
-            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3); /* Optional: Made the default shadow pink to match */
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
         }
 
         .btn-takeover-tier:hover:not(:disabled) {
-            /* CHANGED: background -> background-image */
-            background-image: linear-gradient(270deg, rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4)) !important;
-            background-size: 400% 400% !important;
-            /* ADDED: Keep the animation running on hover (speeds it up slightly for a cool effect) */
-            animation: rainbow-shift 3s linear infinite !important;
+            background-image: linear-gradient(270deg, rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4), rgba(255,0,0,0.4)) !important;
+            background-size: 200% 200% !important;
+            animation: rainbow-shift 1.5s linear infinite !important;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.6) !important;
             transform: translateY(-4px) scale(1.05);
         }
