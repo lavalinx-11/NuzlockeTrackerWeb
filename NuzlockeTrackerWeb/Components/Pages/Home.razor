@@ -933,16 +933,26 @@
         }
 
         .btn-takeover-tier {
-            background-image: linear-gradient(270deg, rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15), rgba(255,0,0,0.15)) !important;
-            background-size: 200% 200% !important;
+            /* CHANGED: Two full rainbow cycles back-to-back so the loop point is completely invisible */
+            background-image: linear-gradient(to right,
+            rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15),
+            rgba(255,0,0,0.15), rgba(255,128,0,0.15), rgba(255,255,0,0.15), rgba(0,255,0,0.15), rgba(0,255,255,0.15), rgba(255,0,255,0.15),
+            rgba(255,0,0,0.15)
+            ) !important;
+            background-size: 200% 100% !important;
             animation: rainbow-shift 4s linear infinite !important;
             border: 2px solid #ff00ff !important;
             box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
         }
 
         .btn-takeover-tier:hover:not(:disabled) {
-            background-image: linear-gradient(270deg, rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4), rgba(255,0,0,0.4)) !important;
-            background-size: 200% 200% !important;
+            /* CHANGED: Match the double-cycle for the hover state */
+            background-image: linear-gradient(to right,
+            rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4),
+            rgba(255,0,0,0.4), rgba(255,128,0,0.4), rgba(255,255,0,0.4), rgba(0,255,0,0.4), rgba(0,255,255,0.4), rgba(255,0,255,0.4),
+            rgba(255,0,0,0.4)
+            ) !important;
+            background-size: 200% 100% !important;
             animation: rainbow-shift 1.5s linear infinite !important;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.6) !important;
             transform: translateY(-4px) scale(1.05);
