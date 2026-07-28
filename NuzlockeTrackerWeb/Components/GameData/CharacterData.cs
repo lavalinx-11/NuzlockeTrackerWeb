@@ -113,7 +113,7 @@ public static class CharacterData
         new Character("Okuyasu","Jojo", 107, CharacterTier.S),
         new Character("Kars","Jojo", 108, CharacterTier.S),
         new Character("Weather Report","Jojo", 109, CharacterTier.TakeOver),
-        new Character("Rissoto","Jojo", 110, CharacterTier.Null),
+        new Character("Risotto","Jojo", 110, CharacterTier.Null),
         new Character("Speedwagon","Jojo", 111, CharacterTier.Null),
         new Character("Dio","Jojo", 112, CharacterTier.S),
         new Character("Doppio","Jojo", 113, CharacterTier.Null),
