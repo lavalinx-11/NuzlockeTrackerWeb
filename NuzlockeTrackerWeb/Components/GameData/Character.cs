@@ -5,7 +5,7 @@ public enum CharacterTier
     TakeOver,
     Z,
     S,
-    Null
+    Unrestricted
 }
 public class Character
 {
