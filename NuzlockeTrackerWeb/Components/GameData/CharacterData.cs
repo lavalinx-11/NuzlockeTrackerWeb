@@ -30,7 +30,7 @@ public static class CharacterData
         new Character("Piccolo","Dragon Ball", 24, CharacterTier.Null),
         new Character("Krillin","Dragon Ball", 25, CharacterTier.Z),
         new Character("Gohan","Dragon Ball", 26, CharacterTier.TakeOver),
-        new Character("Buu Goku","Dragon Ball", 27, CharacterTier.S),
+        new Character("Buu Goku","Dragon Ball", 27, CharacterTier.Null),
         new Character("Trunks","Dragon Ball", 28, CharacterTier.Z),
         new Character("Caulifla","Dragon Ball", 29, CharacterTier.Null),
         new Character("Majin Vegeta","Dragon Ball", 30, CharacterTier.Null),
