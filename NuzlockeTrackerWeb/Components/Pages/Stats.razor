@@ -324,8 +324,72 @@
                     </div>
                 </div>
             </div>
+            <!-- Versus Character Matchups -->
+<div class="col-12">
+    <div class="card bg-black border-secondary rounded-3 shadow-sm">
+        <div class="card-header bg-dark text-center py-2 border-secondary">
+            <h5 class="mb-0 text-white fw-bold">Versus Character Matchups</h5>
+        </div>
+        <div class="card-body p-3">
+            <div class="row g-4">
+                <!-- Top 5 Won Against -->
+                <div class="col-md-6 border-end border-secondary">
+                    @if (profile.EnemyCharacterMatchups.Any())
+                    {
+                        var bestVsChars = profile.EnemyCharacterMatchups
+                            .OrderByDescending(c => c.Ratio)
+                            .ThenByDescending(c => c.Wins)
+                            .Take(5)
+                            .ToList();
+
+                        <h6 class="text-info fw-bold small text-uppercase mb-3">Easiest Matchups (Characters you beat)</h6>
+                        @foreach(var c in bestVsChars) {
+                            <div class="d-flex justify-content-between border-bottom border-secondary py-2 small">
+                                <span class="text-white fw-bold">vs. @c.CharacterName</span> 
+                                <span class="text-info fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted small text-center py-4">No opponent character history.</div>
+                    }
+                </div>
+
+                <!-- Top 5 Lost Against -->
+                <div class="col-md-6">
+                    @if (profile.EnemyCharacterMatchups.Any())
+                    {
+                        // Ensure we don't just show the same characters if there aren't many played
+                        var bestVsChars = profile.EnemyCharacterMatchups.OrderByDescending(c => c.Ratio).ThenByDescending(c => c.Wins).Take(5).ToList();
+                        
+                        var worstVsChars = profile.EnemyCharacterMatchups
+                            .OrderBy(c => c.Ratio)
+                            .ThenByDescending(c => c.Losses)
+                            .Where(c => !bestVsChars.Contains(c) || profile.EnemyCharacterMatchups.Count <= 5)
+                            .Take(5)
+                            .ToList();
+
+                        <h6 class="text-danger fw-bold small text-uppercase mb-3">Worst Matchups (Characters that beat you)</h6>
+                        @foreach(var c in worstVsChars) {
+                            <div class="d-flex justify-content-between border-bottom border-secondary py-2 small">
+                                <span class="text-white fw-bold">vs. @c.CharacterName</span> 
+                                <span class="text-danger fw-bold">@c.Wins W - @c.Losses L (@c.Ratio%)</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-muted small text-center py-4">No opponent character history.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
     }
+    
     else
     {
         @* --- STATS DASHBOARD & LEADERBOARD --- *@
@@ -734,73 +798,90 @@
     }
     
     private PlayerRecord GetPlayerData(string targetPlayer)
+{
+    var playerData = playerRankings.FirstOrDefault(p => p.PlayerName.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)) 
+                     ?? new PlayerRecord { PlayerName = targetPlayer };
+    
+    var characterMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
+    var teamMap = new Dictionary<string, TeamRecord>(StringComparer.OrdinalIgnoreCase); 
+    var opponentMap = new Dictionary<string, OpponentRecord>(StringComparer.OrdinalIgnoreCase);
+    var enemyCharacterMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
+
+    foreach (var match in historicalMatches)
     {
-        var playerData = playerRankings.FirstOrDefault(p => p.PlayerName.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)) 
-                         ?? new PlayerRecord { PlayerName = targetPlayer };
+        if (match.Team1Names == null || match.Team2Names == null) continue;
+
+        bool inTeam1 = match.Team1Names.Any(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
+        bool inTeam2 = match.Team2Names.Any(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
+
+        if (!inTeam1 && !inTeam2) continue;
+
+        bool wonMatch = (inTeam1 && match.WinningTeamSide == 1) || (inTeam2 && match.WinningTeamSide == 2);
         
-        var characterMap = new Dictionary<string, CharacterRecord>(StringComparer.OrdinalIgnoreCase);
-        var teamMap = new Dictionary<string, TeamRecord>(StringComparer.OrdinalIgnoreCase); 
-        var opponentMap = new Dictionary<string, OpponentRecord>(StringComparer.OrdinalIgnoreCase);
+        // 1. Process Teammates
+        var myTeamList = inTeam1 ? match.Team1Names : match.Team2Names;
+        string teammateKey = string.Join(" & ", myTeamList.Where(n => !n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)).OrderBy(n => n));
+        if (string.IsNullOrEmpty(teammateKey)) teammateKey = "Solo";
 
-        foreach (var match in historicalMatches)
+        if (!teamMap.TryGetValue(teammateKey, out var tRecord))
         {
-            if (match.Team1Names == null || match.Team2Names == null) continue;
+            tRecord = new TeamRecord { TeamComposition = teammateKey };
+            teamMap[teammateKey] = tRecord;
+        }
+        if (wonMatch) tRecord.Wins++; else tRecord.Losses++;
 
-            bool inTeam1 = match.Team1Names.Any(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
-            bool inTeam2 = match.Team2Names.Any(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
+        // 2. Process Opponents (Enemy Teams)
+        var oppTeamList = inTeam1 ? match.Team2Names : match.Team1Names;
+        string oppKey = string.Join(" & ", oppTeamList.OrderBy(n => n));
 
-            if (!inTeam1 && !inTeam2) continue;
+        if (!opponentMap.TryGetValue(oppKey, out var oppRecord))
+        {
+            oppRecord = new OpponentRecord { OpponentTeam = oppKey };
+            opponentMap[oppKey] = oppRecord;
+        }
+        if (wonMatch) oppRecord.Wins++; else oppRecord.Losses++;
 
-            bool wonMatch = (inTeam1 && match.WinningTeamSide == 1) || (inTeam2 && match.WinningTeamSide == 2);
-            
-            // 1. Process Teammates
-            var myTeamList = inTeam1 ? match.Team1Names : match.Team2Names;
-            string teammateKey = string.Join(" & ", myTeamList.Where(n => !n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase)).OrderBy(n => n));
-            if (string.IsNullOrEmpty(teammateKey)) teammateKey = "Solo";
-
-            if (!teamMap.TryGetValue(teammateKey, out var tRecord))
+        // 3. Process Own Characters
+        var myRoster = inTeam1 ? match.Team1Roster : match.Team2Roster;
+        int playerIndex = myTeamList.FindIndex(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
+        
+        if (myRoster != null && playerIndex >= 0)
+        {
+            var myChars = myRoster.Skip(playerIndex * 5).Take(5).Where(c => !string.IsNullOrWhiteSpace(c));
+            foreach (var character in myChars)
             {
-                tRecord = new TeamRecord { TeamComposition = teammateKey };
-                teamMap[teammateKey] = tRecord;
-            }
-            if (wonMatch) tRecord.Wins++; else tRecord.Losses++;
-
-            // 2. Process Opponents
-            var oppTeamList = inTeam1 ? match.Team2Names : match.Team1Names;
-            string oppKey = string.Join(" & ", oppTeamList.OrderBy(n => n));
-
-            if (!opponentMap.TryGetValue(oppKey, out var oppRecord))
-            {
-                oppRecord = new OpponentRecord { OpponentTeam = oppKey };
-                opponentMap[oppKey] = oppRecord;
-            }
-            if (wonMatch) oppRecord.Wins++; else oppRecord.Losses++;
-
-            // 3. Process Characters
-            var myRoster = inTeam1 ? match.Team1Roster : match.Team2Roster;
-            int playerIndex = myTeamList.FindIndex(n => n.Equals(targetPlayer, StringComparison.OrdinalIgnoreCase));
-            
-            if (myRoster != null && playerIndex >= 0)
-            {
-                var myChars = myRoster.Skip(playerIndex * 5).Take(5).Where(c => !string.IsNullOrWhiteSpace(c));
-                foreach (var character in myChars)
+                if (!characterMap.TryGetValue(character, out var cRecord))
                 {
-                    if (!characterMap.TryGetValue(character, out var cRecord))
-                    {
-                        cRecord = new CharacterRecord { CharacterName = character };
-                        characterMap[character] = cRecord;
-                    }
-                    if (wonMatch) cRecord.Wins++; else cRecord.Losses++;
+                    cRecord = new CharacterRecord { CharacterName = character };
+                    characterMap[character] = cRecord;
                 }
+                if (wonMatch) cRecord.Wins++; else cRecord.Losses++;
             }
         }
 
-        playerData.PlayedCharacters = characterMap.Values.ToList();
-        playerData.TeamSynergies = teamMap.Values.ToList();
-        playerData.OpponentMatchups = opponentMap.Values.ToList();
-
-        return playerData;
+        // 4. Process Enemy Character Matchups
+        var oppRoster = inTeam1 ? match.Team2Roster : match.Team1Roster;
+        if (oppRoster != null)
+        {
+            foreach (var enemyChar in oppRoster.Where(c => !string.IsNullOrWhiteSpace(c)))
+            {
+                if (!enemyCharacterMap.TryGetValue(enemyChar, out var eRecord))
+                {
+                    eRecord = new CharacterRecord { CharacterName = enemyChar };
+                    enemyCharacterMap[enemyChar] = eRecord;
+                }
+                if (wonMatch) eRecord.Wins++; else eRecord.Losses++;
+            }
+        }
     }
+
+    playerData.PlayedCharacters = characterMap.Values.ToList();
+    playerData.TeamSynergies = teamMap.Values.ToList();
+    playerData.OpponentMatchups = opponentMap.Values.ToList();
+    playerData.EnemyCharacterMatchups = enemyCharacterMap.Values.ToList();
+
+    return playerData;
+}
 
     private void SortCharacters(string columnName)
     {
@@ -841,6 +922,7 @@
         public List<CharacterRecord> PlayedCharacters { get; set; } = new();
         public List<TeamRecord> TeamSynergies { get; set; } = new();
         public List<OpponentRecord> OpponentMatchups { get; set; } = new();
+        public List<CharacterRecord> EnemyCharacterMatchups { get; set; } = new();
     }
 
     public class TeamRecord
