@@ -593,19 +593,17 @@
     if (teamHasTakeOver && choosingZTier) return true;
 
     // Adjust max S-Tiers based on current roster composition & team rules
-    if (currentZTiers > 0)
-    {
-        maxSTiers = 2;
-    }
-
     if (currentTakeOver > 0)
     {
-        maxSTiers = 0;
+        maxSTiers = 0; // The player who picked Takeover gets 0 S-Tiers
     }
-
-    if (teamHasTakeOver)
+    else if (teamHasTakeOver)
     {
-        maxSTiers = 2;
+        maxSTiers = 2; // Teammates of the Takeover player get 2 S-Tiers
+    }
+    else if (currentZTiers > 0)
+    {
+        maxSTiers = 2; // Players with a Z-Tier get 2 S-Tiers
     }
         
     // S-Tier constraints
@@ -620,8 +618,8 @@
     return false;
 }
     
-    private void SelectCharacter(Character chosen) {
-    
+private void SelectCharacter(Character chosen) 
+{
     if (matchSession == null) return;
     var player = matchSession.PickingOrder[matchSession.CurrentPickerIndex];
     errorMessage = "";
@@ -637,7 +635,7 @@
     int currentSTiers = player.GetSTiers();
     int currentZTiers = player.GetZTier();
     int currentTakeOver = player.GetTakeOver();
-    int maxSTiers = 47;
+    int maxSTiers = 4; // Default max limit
     
     bool choosingTakeOver = chosen.Tier == CharacterTier.TakeOver;
     bool choosingZTier = chosen.Tier == CharacterTier.Z;
@@ -682,20 +680,19 @@
         matchSession.Notify();
         return;
     }
-    
-    if (currentZTiers > 0)
-    {
-        maxSTiers = 2;
-    }
 
+    // Set max S-Tiers exactly like IsCharacterRestricted
     if (currentTakeOver > 0)
     {
-        maxSTiers = 0;
+        maxSTiers = 0; // The player who picked Takeover gets 0 S-Tiers
     }
-
-    if (teamHasTakeOver)
+    else if (teamHasTakeOver)
     {
-        maxSTiers = 2;
+        maxSTiers = 2; // Teammates of the Takeover player get 2 S-Tiers
+    }
+    else if (currentZTiers > 0)
+    {
+        maxSTiers = 2; // Players with a Z-Tier get 2 S-Tiers
     }
     
     if (currentSTiers >= maxSTiers && choosingSTier) {
