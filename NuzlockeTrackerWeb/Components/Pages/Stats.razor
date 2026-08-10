@@ -324,7 +324,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Versus Character Matchups -->
+           <!-- Versus Character Matchups -->
 <div class="col-12">
     <div class="card bg-black border-secondary rounded-3 shadow-sm">
         <div class="card-header bg-dark text-center py-2 border-secondary">
@@ -337,8 +337,8 @@
                     @if (profile.EnemyCharacterMatchups.Any())
                     {
                         var bestVsChars = profile.EnemyCharacterMatchups
-                            .OrderByDescending(c => c.Ratio)
-                            .ThenByDescending(c => c.Wins)
+                            .OrderByDescending(c => c.Wins)
+                            .ThenByDescending(c => c.Ratio)
                             .Take(5)
                             .ToList();
 
@@ -360,12 +360,16 @@
                 <div class="col-md-6">
                     @if (profile.EnemyCharacterMatchups.Any())
                     {
-                        // Ensure we don't just show the same characters if there aren't many played
-                        var bestVsChars = profile.EnemyCharacterMatchups.OrderByDescending(c => c.Ratio).ThenByDescending(c => c.Wins).Take(5).ToList();
+                        // Ensure we use the new sorting logic here so the exclusion filter works correctly
+                        var bestVsChars = profile.EnemyCharacterMatchups
+                            .OrderByDescending(c => c.Wins)
+                            .ThenByDescending(c => c.Ratio)
+                            .Take(5)
+                            .ToList();
                         
                         var worstVsChars = profile.EnemyCharacterMatchups
-                            .OrderBy(c => c.Ratio)
-                            .ThenByDescending(c => c.Losses)
+                            .OrderByDescending(c => c.Losses)
+                            .ThenBy(c => c.Ratio)
                             .Where(c => !bestVsChars.Contains(c) || profile.EnemyCharacterMatchups.Count <= 5)
                             .Take(5)
                             .ToList();
