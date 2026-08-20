@@ -30,7 +30,7 @@ public static class CharacterData
         new Character("Piccolo","Dragon Ball", 24, CharacterTier.Unrestricted),
         new Character("Krillin","Dragon Ball", 25, CharacterTier.Z),
         new Character("Gohan","Dragon Ball", 26, CharacterTier.TakeOver),
-        new Character("Buu Goku","Dragon Ball", 27, CharacterTier.Z),
+        new Character("Buu Goku","Dragon Ball", 27, CharacterTier.TakeOver),
         new Character("Trunks","Dragon Ball", 28, CharacterTier.Z),
         new Character("Caulifla","Dragon Ball", 29, CharacterTier.Unrestricted),
         new Character("Majin Vegeta","Dragon Ball", 30, CharacterTier.Unrestricted),
@@ -200,7 +200,7 @@ public static class CharacterData
         new Character("Baam","Misc", 194, CharacterTier.TakeOver),
         new Character("Akaza","Demon Slayer", 195, CharacterTier.S),
         new Character("Chiaotzu","Prestige", 196, CharacterTier.Unrestricted),
-        new Character("Mahito","JJK", 197, CharacterTier.TakeOver),
+        new Character("Mahito","JJK", 197, CharacterTier.Z),
         new Character("Yuta","JJK", 198, CharacterTier.S),
         new Character("Rukia [LEGACY]","Bleach", 199, CharacterTier.Unrestricted),
         new Character("Aizen [LEGACY]","Bleach", 200, CharacterTier.Unrestricted)
