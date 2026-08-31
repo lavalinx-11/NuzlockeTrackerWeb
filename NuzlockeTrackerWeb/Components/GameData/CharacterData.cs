@@ -53,7 +53,7 @@ public static class CharacterData
         new Character("Zabuza","Naruto", 47, CharacterTier.Unrestricted),
         new Character("Gaara","Naruto", 48, CharacterTier.S),
         new Character("TS Sasuke","Naruto", 49, CharacterTier.S),
-        new Character("TS Naruto","Naruto", 50, CharacterTier.S),
+        new Character("TS Naruto","Naruto", 50, CharacterTier.Z),
         new Character("Itachi","Naruto", 51, CharacterTier.Z),
         new Character("Pain","Naruto", 52, CharacterTier.Z),
         new Character("Guy","Naruto", 53, CharacterTier.S),
