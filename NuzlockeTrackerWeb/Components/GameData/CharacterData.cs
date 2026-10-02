@@ -24,7 +24,7 @@ public static class CharacterData
         new Character("Arlong","One Piece", 18, CharacterTier.Unrestricted),
         new Character("Wano Law","One Piece", 19, CharacterTier.Z),
         new Character("Shanks","One Piece", 20, CharacterTier.Unrestricted),
-        new Character("Whitebeard","One Piece", 21, CharacterTier.Unrestricted),
+        new Character("Whitebeard","One Piece", 21, CharacterTier.Z),
         new Character("Namek Goku","Dragon Ball", 22, CharacterTier.S),
         new Character("Android Vegeta","Dragon Ball", 23, CharacterTier.Z),
         new Character("Piccolo","Dragon Ball", 24, CharacterTier.Unrestricted),
@@ -203,6 +203,13 @@ public static class CharacterData
         new Character("Mahito","JJK", 197, CharacterTier.Z),
         new Character("Yuta","JJK", 198, CharacterTier.S),
         new Character("Rukia [LEGACY]","Bleach", 199, CharacterTier.Unrestricted),
-        new Character("Aizen [LEGACY]","Bleach", 200, CharacterTier.Unrestricted)
+        new Character("Aizen [LEGACY]","Bleach", 200, CharacterTier.Unrestricted),
+        new Character("Buggy","One Piece", 201, CharacterTier.Z),
+        new Character("Kuma","One Piece", 202, CharacterTier.Unrestricted),
+        new Character("Garp","One Piece", 203, CharacterTier.Unrestricted),
+        new Character("Blackbeard","One Piece", 204, CharacterTier.S),
+        new Character("Doflamingo","One Piece", 205, CharacterTier.Z),
+        new Character("Kaido","One Piece", 206, CharacterTier.Z),
+        new Character("Luffy Emporer","Bleach", 200, CharacterTier.Z),
     };
 }
