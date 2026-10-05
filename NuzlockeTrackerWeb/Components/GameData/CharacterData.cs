@@ -210,6 +210,6 @@ public static class CharacterData
         new Character("Blackbeard","One Piece", 204, CharacterTier.S),
         new Character("Doflamingo","One Piece", 205, CharacterTier.Z),
         new Character("Kaido","One Piece", 206, CharacterTier.Z),
-        new Character("Luffy Emporer","Bleach", 200, CharacterTier.Z),
+        new Character("Luffy Emporer","Bleach", 207, CharacterTier.Z),
     };
 }

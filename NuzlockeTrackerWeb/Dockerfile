@@ -1,22 +1,17 @@
-
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+# Build stage: pull .NET 10 SDK
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-
-
 COPY ["NuzlockeTrackerWeb.csproj", "./"]
 RUN dotnet restore "NuzlockeTrackerWeb.csproj"
-
-
 COPY . .
+RUN dotnet build "NuzlockeTrackerWeb.csproj" -c Release -o /app/build
+
+# Publish stage
+FROM build AS publish
 RUN dotnet publish "NuzlockeTrackerWeb.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+# Runtime stage: pull .NET 10 ASP.NET runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-
-# Port configuration
-ENV ASPNETCORE_URLS=http://+:8080
-EXPOSE 8080
-
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "NuzlockeTrackerWeb.dll"]
